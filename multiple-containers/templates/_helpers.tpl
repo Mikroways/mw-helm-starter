@@ -60,3 +60,23 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Get the name of the persistent volume claim
+*/}}
+{{- define "<CHARTNAME>.pvcName" -}}
+  {{- if ( index .root.Values.containers .container ).persistence.existingClaim -}}
+    {{- printf "%s" (tpl ( index .root.Values.containers .container ).persistence.existingClaim $) -}}
+  {{- else -}}
+      {{- printf "%s-%s" (( index .root.Values.containers .container).persistence.mountName ) (include "<CHARTNAME>.fullname" .root) -}}
+  {{- end -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified object name based on container name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "<CHARTNAME>.containerObjectName" -}}
+{{- printf "%s-%s" .container (include "<CHARTNAME>.fullname" .root ) | trunc 63 | trimSuffix "-" }}
+{{- end }}

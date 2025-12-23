@@ -1,3 +1,4 @@
+{{- if .Values.config.env }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -5,3 +6,4 @@ metadata:
   labels:
     {{- include "<CHARTNAME>.labels" . | nindent 4 }}
 data: {{- tpl (.Values.config.env | toYaml) . | nindent 2 }}
+{{- end }}

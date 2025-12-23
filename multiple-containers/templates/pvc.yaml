@@ -1,0 +1,27 @@
+{{- range $i, $container := .Values.containers }}
+{{- if and ($container.persistence.enabled) (not $container.persistence.existingClaim) }}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  {{- if $container.persistence.annotations }}
+  annotations:
+    {{- toYaml $container.persistence.annotations | nindent 4 }}
+  {{- end }}
+  name: {{ include "<CHARTNAME>.pvcName" (dict "root" $ "container" $i ) }}
+  labels:
+    {{- include "<CHARTNAME>.labels" $ | nindent 4 }}
+spec:
+  accessModes:
+  {{- range $container.persistence.accessModes }}
+    - {{ . | quote }}
+  {{- end }}
+  {{- with $container.persistence.resources }}
+  resources:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if $container.persistence.storageClassName }}
+  storageClassName: {{ $container.persistence.storageClassName | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}

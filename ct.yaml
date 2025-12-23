@@ -1,0 +1,5 @@
+chart-dirs:
+  - test          # Carpeta donde viven tus charts
+validate-chart-schema: true
+validate-yaml: true
+validate-maintainers: false

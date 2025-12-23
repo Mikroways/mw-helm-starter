@@ -35,15 +35,28 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.env }}
+          env:
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
+              value: {{ tpl $val $ | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if or .Values.config.env .Values.config.secretEnv }}
           envFrom:
+            {{- if .Values.config.env }}
             - configMapRef:
                 name: {{ include "<CHARTNAME>.fullname" . }}
+            {{- end }}
+            {{- if .Values.config.secretEnv }}
             - secretRef:
                 name: {{ include "<CHARTNAME>.fullname" . }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.ports }}
           ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{ toYaml . | nindent 12 }}
@@ -58,6 +71,11 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: {{ required "persistence.mountName must be set" .Values.persistence.mountName }}
+              mountPath: {{ required "persistence.mountPath must be set" .Values.persistence.mountPath }}
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -69,4 +87,10 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: {{ .Values.persistence.mountName }}
+          persistentVolumeClaim:
+            claimName: {{ include "<CHARTNAME>.pvcName" . }}
       {{- end }}

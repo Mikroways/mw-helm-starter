@@ -1,0 +1,103 @@
+{{- $volumesHolder := dict "volumes" (list) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "<CHARTNAME>.fullname" . }}
+  labels:
+    {{- include "<CHARTNAME>.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "<CHARTNAME>.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "<CHARTNAME>.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "<CHARTNAME>.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      {{- range $i, $container := .Values.containers }}
+        - name: {{ $i }}
+          securityContext:
+            {{- toYaml ( default dict $container.securityContext ) | nindent 12 }}
+          image: "{{ $container.image.repository }}:{{ $container.image.tag | default $.Chart.AppVersion }}"
+          imagePullPolicy: {{ default $.Values.image.pullPolicy $container.image.pullPolicy }}
+          {{- if $container.env }}
+          env:
+            {{- range $key, $val := $container.env }}
+            - name: {{ $key }}
+              value: {{ tpl $val $ | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if or $container.config.env $container.config.secretEnv }}
+          envFrom:
+            {{- if $container.config.env }}
+            - configMapRef:
+                name: {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" $i) }}
+            {{- end }}
+            {{- if $container.config.secretEnv }}
+            - secretRef:
+                name: {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" $i) }}
+            {{- end }}
+          {{- end }}
+          {{- with $container.ports }}
+          ports:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $container.livenessProbe }}
+          livenessProbe:
+            {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $container.readinessProbe }}
+          readinessProbe:
+            {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $container.startupProbe }}
+          startupProbe:
+            {{ toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml ( default dict $container.resources ) | nindent 12 }}
+          {{- if $container.persistence.enabled }}
+          {{- $volumes := append $volumesHolder.volumes (dict "index" $i "vol" $container.persistence) -}}
+          {{- $_ := set $volumesHolder "volumes" $volumes }}
+          volumeMounts:
+            - name: {{ required (printf "container[%d].persistence.mountName must be set" $i) $container.persistence.mountName }}
+              mountPath: {{ required (printf "containers[%d].persistence.mountPath must be set" $i) $container.persistence.mountPath }}
+          {{- end }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if $volumesHolder.volumes }}
+      volumes:
+        {{- range $item := $volumesHolder.volumes }}
+        - name: {{ $item.vol.mountName }}
+          persistentVolumeClaim:
+            claimName: {{ include "<CHARTNAME>.pvcName" (dict "root" $ "container" $item.index) }}
+        {{- end }}
+      {{- end }}
