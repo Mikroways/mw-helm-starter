@@ -1,0 +1,15 @@
+containers:
+  app:
+    persistence:
+      data:
+        accessModes:
+        annotations:
+          example.com/annotation: "true"
+        storageClassName: "storageclass"
+        resources:
+          requests:
+            storage: 1Gi
+        mountPath: "/data"
+      existingData:
+        mountPath: "/existing-data"
+        existingClaim: "my-existing-pvc"

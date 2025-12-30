@@ -1,0 +1,99 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test per container persistence
+templates:
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+tests:
+  - it: Should have no volumes confired
+    template: deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts
+      - notExists:
+          path: spec.template.spec.volumes
+  - it: Should have volumes configured for each container
+    template: deployment.yaml
+    values:
+      - values/persistence.yaml
+    set:
+      fullnameOverride: fullname
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: data
+            mountPath: /data
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: existingData
+            mountPath: /existing-data
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            persistentVolumeClaim:
+              claimName: data-fullname
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: existingData
+            persistentVolumeClaim:
+              claimName: my-existing-pvc
+  - it: Should have volumes configured using extraMounts only
+    template: deployment.yaml
+    values:
+      - values/persistence_extra_mounts.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: my-extra-volume
+            mountPath: /my/extra/path
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: my-extra-volume
+            emptyDir: {}
+  - it: Should have volumes configured using extraMounts and persistence
+    template: deployment.yaml
+    values:
+      - values/persistence_and_extra_mounts.yaml
+    set:
+      fullnameOverride: fullname
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: my-extra-volume
+            mountPath: /my/extra/path
+            readOnly: true
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: data
+            mountPath: /data
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: existingData
+            mountPath: /existing-data
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: my-extra-volume
+            emptyDir: {}
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            persistentVolumeClaim:
+              claimName: data-fullname
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: existingData
+            persistentVolumeClaim:
+              claimName: my-existing-pvc

@@ -24,5 +24,13 @@ jobs:
       - name: Set up Chart Testing
         uses: helm/chart-testing-action@v2.6.1
 
-      - name: Run Makefile Test
-        run: make test
+      - name: Set up Chart UnitTesting
+        uses:  d3adb5/helm-unittest-action@v2
+        with:
+          unittest-version: 1.0.3
+
+      - name: Run linter
+        run: make lint
+
+      - name: Run unit tests
+        run: make unit-test

@@ -1,0 +1,9 @@
+containers:
+  app:
+    extraVolumeMounts:
+      - name: my-extra-volume
+        mountPath: /my/extra/path
+        readOnly: true
+extraVolumes:
+  - name: my-extra-volume
+    emptyDir: {}

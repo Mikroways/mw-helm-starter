@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test Deployment envFrom ConfigMap
+templates:
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+tests:
+  - it: Should have no configmap envFrom
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: app
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
+  - it: Should have configmap envFrom
+    template: deployment.yaml
+    values:
+      - values/container_config_env.yaml
+    set:
+      fullnameOverride: fullname
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: app
+      - exists:
+          path: spec.template.spec.containers[0].envFrom
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: app-fullname

@@ -1,0 +1,20 @@
+containers:
+  app:
+    ports:
+      - name: http
+        containerPort: 80
+        protocol: TCP
+      - name: https
+        containerPort: 443
+        protocol: TCP
+
+service:
+  ports:
+    - name: http
+      protocol: TCP
+      targetPort: http
+      port: 8080
+    - name: https
+      protocol: TCP
+      targetPort: https
+      port: 4430

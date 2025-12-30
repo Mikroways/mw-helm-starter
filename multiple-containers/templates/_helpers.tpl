@@ -65,10 +65,11 @@ Create the name of the service account to use
 Get the name of the persistent volume claim
 */}}
 {{- define "<CHARTNAME>.pvcName" -}}
-  {{- if ( index .root.Values.containers .container ).persistence.existingClaim -}}
-    {{- printf "%s" (tpl ( index .root.Values.containers .container ).persistence.existingClaim $) -}}
+  {{- $volumeSpec := index ( index .root.Values.containers .container ).persistence .volumeName -}}
+  {{- if $volumeSpec.existingClaim -}}
+    {{- printf "%s" (tpl $volumeSpec.existingClaim $) -}}
   {{- else -}}
-      {{- printf "%s-%s" (( index .root.Values.containers .container).persistence.mountName ) (include "<CHARTNAME>.fullname" .root) -}}
+      {{- printf "%s-%s" .volumeName  (include "<CHARTNAME>.fullname" .root) -}}
   {{- end -}}
 {{- end -}}
 

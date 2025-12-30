@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test container ports
+templates:
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+tests:
+  - it: Should have no ports configured
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: app
+      - notExists:
+          path: spec.template.spec.containers[0].ports
+  - it: Should have ports configured
+    template: deployment.yaml
+    values:
+      - values/container_ports.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: app
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: http
+            protocol: TCP
+            containerPort: 80
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            name: https
+            protocol: TCP
+            containerPort: 443
+              

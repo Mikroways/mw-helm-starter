@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test Deployment command and args
+templates:
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+tests:
+  - it: Should have no command nor args
+    template: deployment.yaml
+    values:
+      - values/container_command_args_envs.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: app
+      - notExists:
+          path: spec.template.spec.containers[0].command
+      - notExists:
+          path: spec.template.spec.containers[0].args
+  - it: Should have command
+    template: deployment.yaml
+    values:
+      - values/container_command_args_envs.yaml
+    set:
+      fullnameOverride: fullname
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[3].name
+          value: container_with_command
+      - exists:
+          path: spec.template.spec.containers[3].command
+      - equal:
+          path: spec.template.spec.containers[3].command
+          value:
+            - /bin/sh
+            - -c
+            - |
+              echo "Starting application..."
+              exec my-app
+  - it: Should have args  
+    template: deployment.yaml
+    values:
+      - values/container_command_args_envs.yaml
+    set:
+      fullnameOverride: fullname
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[2].name
+          value: container_with_args
+      - exists:
+          path: spec.template.spec.containers[2].args
+      - equal:
+          path: spec.template.spec.containers[2].args
+          value:
+            - --config
+            - /etc/myapp/config.yaml  
+            - --verbose 

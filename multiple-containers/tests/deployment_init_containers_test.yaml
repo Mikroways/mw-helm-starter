@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test Deployment initContainers
+templates:
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+tests:
+  - it: Should have no initContainers configured
+    template: deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers
+  - it: Should have initContainers configured
+    template: deployment.yaml
+    values:
+      - values/init_containers.yaml
+    asserts:
+      - exists:
+          path: spec.template.spec.initContainers
+      - contains:
+          path: spec.template.spec.initContainers
+          content:
+            name: init-myservice
+            image: busybox
+            command: ['sh', '-c', 'echo Initializing... && sleep 5']

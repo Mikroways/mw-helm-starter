@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test Service
+templates:
+  - service.yaml
+tests:
+  - it: Should have no service rendered
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: Should have service rendered
+    values:
+      - values/container_ports.yaml
+    release:
+      name: my-release
+    set:
+      nameOverride: myapp
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: my-release-myapp
+      - contains:
+          path: spec.ports
+          content:
+            name: http
+            protocol: TCP
+            port: 8080
+            targetPort: http
+      - contains:
+          path: spec.ports
+          content:
+            name: https
+            protocol: TCP
+            port: 4430
+            targetPort: https
+                            

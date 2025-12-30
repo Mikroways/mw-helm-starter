@@ -1,5 +1,5 @@
 {{- range $i, $container := .Values.containers }}
-{{- if $container.config.env }}
+{{- if and $container.config $container.config.env }}
 ---
 apiVersion: v1
 kind: ConfigMap

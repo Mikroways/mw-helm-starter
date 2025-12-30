@@ -1,0 +1,4 @@
+initContainers:
+  - name: init-myservice
+    image: busybox
+    command: ['sh', '-c', 'echo Initializing... && sleep 5']

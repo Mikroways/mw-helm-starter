@@ -1,0 +1,23 @@
+containers:
+  app:
+    persistence:
+      data:
+        accessModes:
+        annotations:
+          example.com/annotation: "true"
+        storageClassName: "storageclass"
+        resources:
+          requests:
+            storage: 1Gi
+        mountPath: "/data"
+      existingData:
+        mountPath: "/existing-data"
+        existingClaim: "my-existing-pvc"
+    extraVolumeMounts:
+      - name: my-extra-volume
+        mountPath: /my/extra/path
+        readOnly: true
+extraVolumes:
+  - name: my-extra-volume
+    emptyDir: {}
+

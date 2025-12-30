@@ -1,11 +1,15 @@
 CT_EXISTS := $(shell command -v ct 2> /dev/null)
 
 
-.PHONY: test
+.PHONY: lint
 
-test: clean
+.create-charts: .clean
 	helm create -p $(PWD)/single-container test/single
 	helm create -p $(PWD)/multiple-containers test/multiple
+	helm create -p $(PWD)/php-fpm-nginx test/fpm-nginx
+
+lint: .create-charts
+	@echo "--- Running ct linting ---"
 ifeq ($(CT_EXISTS),)
 	@echo "--- Using ct inside docker ---"
 	docker run -it --workdir=/data --volume $(PWD):/data quay.io/helmpack/chart-testing:v3.14.0 ct lint --all --config ct.yaml
@@ -14,5 +18,9 @@ else
 	ct lint --all --config ct.yaml
 endif
 
-clean:
+unit-test: .create-charts
+	@echo "--- Running unit tests ---"
+	helm unittest test/multiple
+	helm unittest test/fpm-nginx
+.clean:
 	rm -fr test/

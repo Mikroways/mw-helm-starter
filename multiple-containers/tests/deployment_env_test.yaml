@@ -1,0 +1,59 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test Deployment env
+templates:
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+tests:
+  - it: Should have no env
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: app
+      - notExists:
+          path: spec.template.spec.containers[0].env
+  - it: Should have env
+    template: deployment.yaml
+    values:
+      - values/container_command_args_envs.yaml
+    set:
+      fullnameOverride: fullname
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: app
+      - exists:
+          path: spec.template.spec.containers[0].env
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_ENV
+            value: "production"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_DEBUG
+            value: "false"  
+  - it: Should have env and envFrom
+    template: deployment.yaml
+    values:
+      - values/container_command_args_envs.yaml
+    set:
+      fullnameOverride: fullname
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: app_with_env_and_env_from
+      - exists:
+          path: spec.template.spec.containers[1].env
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: LOG_LEVEL
+            value: "info"
+      - contains:
+          path: spec.template.spec.containers[1].envFrom
+          content:
+            configMapRef:
+              name: app_with_env_and_env_from-fullname

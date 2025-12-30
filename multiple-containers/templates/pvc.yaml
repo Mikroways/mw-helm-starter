@@ -1,27 +1,29 @@
 {{- range $i, $container := .Values.containers }}
-{{- if and ($container.persistence.enabled) (not $container.persistence.existingClaim) }}
+{{- range $volName, $volSpec := $container.persistence }}
+{{- if and $container.persistence (not $volSpec.existingClaim) }}
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  {{- if $container.persistence.annotations }}
+  {{- if $volSpec.annotations }}
   annotations:
-    {{- toYaml $container.persistence.annotations | nindent 4 }}
+    {{- toYaml $volSpec.annotations | nindent 4 }}
   {{- end }}
-  name: {{ include "<CHARTNAME>.pvcName" (dict "root" $ "container" $i ) }}
+  name: {{ include "<CHARTNAME>.pvcName" (dict "root" $ "container" $i "volumeName" $volName) }}
   labels:
     {{- include "<CHARTNAME>.labels" $ | nindent 4 }}
 spec:
   accessModes:
-  {{- range $container.persistence.accessModes }}
+  {{- range $volSpec.accessModes }}
     - {{ . | quote }}
   {{- end }}
-  {{- with $container.persistence.resources }}
+  {{- with $volSpec.resources }}
   resources:
   {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- if $container.persistence.storageClassName }}
-  storageClassName: {{ $container.persistence.storageClassName | quote }}
+  {{- if $volSpec.storageClassName }}
+  storageClassName: {{ $volSpec.storageClassName | quote }}
   {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

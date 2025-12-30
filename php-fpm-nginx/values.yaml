@@ -31,12 +31,11 @@ initContainers: []
   #   command: ['sh', '-c', 'echo The app is running! && sleep 3600']
 
 containers:
-  # -- Key will be used as name of containers and other resources like
-  # configmaps, secrets or persistentVolumes. In this case **app** us used
+  # -- FPM container configuration
   app:
     image:
       # -- Image to use for deploying
-      repository: nginx
+      repository: php-fpm
       # -- Image pullPolicy
       pullPolicy: IfNotPresent
       # -- Overrides the image tag whose default is the chart appVersion.
@@ -78,6 +77,106 @@ containers:
     # - name: http
     #   containerPot: 8080
     #   protcolo: TCP
+
+    # -- Enable persistence using a PersistentVolumeClaims. Dictionary keys are
+    # used as volume names, and values is the configuration of each volume.
+    persistence: {}
+      # data:
+      #   accessModes:
+      #     - ReadWriteOnce
+      #   # -- Annotations to be added to the PersistentVolumeClaim
+      #   annotations: {}
+      #   # -- provide an existing PersistentVolumeClaim
+      #   existingClaim: ""
+      #   # -- Name of the StorageClass required by the claim.
+      #   storageClassName: ""
+      #   # -- represents the minimum and maximum resources the volume should have.
+      #   resources: {}
+      #     # requests:
+      #     #   storage: 1Gi
+      #   # -- where volume should be mounted on. Required. For example: `/data`
+      #   mountPath: ""
+
+    # @ignored
+    securityContext: {}
+      # capabilities:
+      #   drop:
+      #   - ALL
+      # readOnlyRootFilesystem: true
+      # runAsNonRoot: true
+      # runAsUser: 1000
+
+    # -- Define a custom
+    # [livenessProbe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
+    livenessProbe: {}
+    #   exec:
+    #     command:
+    #       - php-fpm-healthcheck
+    #   initialDelaySeconds: 0
+    #   periodSeconds: 10
+
+    # -- Define a custom
+    # [readinessProbe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
+    readinessProbe: {}
+    #   exec:
+    #     command:
+    #       - php-fpm-healthcheck
+    #   initialDelaySeconds: 1
+    #   periodSeconds: 5
+
+    # -- Define a custom
+    # [startupProbe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
+    startupProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: http
+
+  # -- NGINX container configuration
+  nginx:
+    image:
+      # -- Image to use for deploying
+      repository: nginxinc/nginx-unprivileged
+      # -- Image pullPolicy
+      pullPolicy: IfNotPresent
+      # -- Overrides the image tag whose default is the chart appVersion.
+      tag: ""
+
+    # -- We usually recommend not to specify default resources and to leave this as
+    # a conscious choice for the user.
+    resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+    # --Key value pairs created as environtment of container pod. This key has a
+    # higher precedense than `config.env` and `config.secretEnv`. It allows gotpl
+    # expressions.
+    env: {}
+
+    config:
+      # --Key value pairs created using a ConfigMap and rendered as environment
+      # variables inside container.Allows gotpl expressions, for example:
+      # `MY_AWSOME_TPL_ENV_VAR: "{{ .Values.global.myAwesomeEnvVar }}"`
+      env: {}
+        # MY_AWESOME_ENV_VAR: "my awesome var"
+        # MY_AWSOME_TPL_ENV_VAR: "{{ .Values.global.myAwesomeEnvVar }}"
+
+      # --Sensitive Key value pairs created using a Secret and rendered as
+      # environment variables inside container.Allows gotpl expressions, for
+      # example: `MY_AWSOME_TPL_ENV_VAR: "{{ .Values.global.myAwesomeEnvVar }}"`
+      secretEnv: {}
+        # MY_SECRET_ENV_VAR: "supersecret"
+        # MY_SECRET_TPL_ENV_VAR: "{{ .Values.global.superSecret }}"
+
+    # -- Array of container ports. Each element can use fields as explained by
+    # `kubectl explain pod.spec.containers[].ports`
+    ports:
+      - name: http
+        containerPot: 8080
+        protcolo: TCP
 
     # -- Enable persistence using a PersistentVolumeClaims. Dictionary keys are
     # used as volume names, and values is the configuration of each volume.

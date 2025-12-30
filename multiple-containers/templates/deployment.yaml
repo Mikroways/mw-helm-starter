@@ -30,12 +30,16 @@ spec:
       serviceAccountName: {{ include "<CHARTNAME>.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       {{- range $i, $container := .Values.containers }}
         - name: {{ $i }}
           securityContext:
             {{- toYaml ( default dict $container.securityContext ) | nindent 12 }}
-          image: "{{ $container.image.repository }}:{{ $container.image.tag | default $.Chart.AppVersion }}"
+          image: "{{ required (printf ".containers.%s.image.repository is required" $i) (required (printf ".containers.%s.image is required" $i) $container.image).repository }}:{{ $container.image.tag | default $.Chart.AppVersion }}"
           imagePullPolicy: {{ default $.Values.image.pullPolicy $container.image.pullPolicy }}
           {{- if $container.env }}
           env:
@@ -44,7 +48,7 @@ spec:
               value: {{ tpl $val $ | quote }}
             {{- end }}
           {{- end }}
-          {{- if or $container.config.env $container.config.secretEnv }}
+          {{- if and $container.config (or $container.config.env $container.config.secretEnv) }}
           envFrom:
             {{- if $container.config.env }}
             - configMapRef:
@@ -58,6 +62,14 @@ spec:
           {{- with $container.ports }}
           ports:
             {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $container.command }}
+          command:
+            {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $container.args }}
+          args:
+            {{ toYaml . | nindent 12 }}
           {{- end }}
           {{- with $container.livenessProbe }}
           livenessProbe:
@@ -73,12 +85,19 @@ spec:
           {{- end }}
           resources:
             {{- toYaml ( default dict $container.resources ) | nindent 12 }}
-          {{- if $container.persistence.enabled }}
+          {{- if $container.persistence }}
           {{- $volumes := append $volumesHolder.volumes (dict "index" $i "vol" $container.persistence) -}}
           {{- $_ := set $volumesHolder "volumes" $volumes }}
+          {{- end }}
+          {{- if or $container.persistence $container.extraVolumeMounts }}
           volumeMounts:
-            - name: {{ required (printf "container[%d].persistence.mountName must be set" $i) $container.persistence.mountName }}
-              mountPath: {{ required (printf "containers[%d].persistence.mountPath must be set" $i) $container.persistence.mountPath }}
+            {{- range $volName, $volSpec := $container.persistence }}
+            - name: {{ $volName }}
+              mountPath: {{ required (printf "containers[%d].persistence.%s.mountPath must be set" $i $volName) $volSpec.mountPath }}
+            {{- end }}
+            {{- range $extraMount := $container.extraVolumeMounts }}
+            - {{ toYaml $extraMount | nindent 14 }}
+            {{- end }}
           {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
@@ -93,11 +112,16 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if $volumesHolder.volumes }}
+      {{- if or $volumesHolder.volumes .Values.extraVolumes }}
       volumes:
-        {{- range $item := $volumesHolder.volumes }}
-        - name: {{ $item.vol.mountName }}
+        {{- range $volumes := $volumesHolder.volumes }}
+        {{- range $volName, $volSpec := $volumes.vol }}
+        - name: {{ $volName }}
           persistentVolumeClaim:
-            claimName: {{ include "<CHARTNAME>.pvcName" (dict "root" $ "container" $item.index) }}
+            claimName: {{ include "<CHARTNAME>.pvcName" (dict "root" $ "container" $volumes.index "volumeName" $volName) }}
+        {{- end }}
+        {{- end }}
+        {{- range .Values.extraVolumes }}
+        - {{ toYaml . | nindent 10 }}
         {{- end }}
       {{- end }}
