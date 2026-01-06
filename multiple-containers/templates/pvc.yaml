@@ -1,4 +1,16 @@
-{{- range $i, $container := .Values.containers }}
+{{- $cronjobContainers := dict -}}
+{{- range $cronjobName, $cronjobValues := .Values.cronjobs }}
+{{- range $i, $container := $cronjobValues.containers }}
+  {{- $_ := set $cronjobContainers (include "<CHARTNAME>.containerName" (dict "prefix" $cronjobName "container" $i)) $container -}}
+{{- end -}}
+{{- end -}}
+{{- $jobContainers := dict -}}
+{{- range $jobName, $jobValues := .Values.jobs }}
+{{- range $i, $container := $jobValues.containers }}
+  {{- $_ := set $jobContainers (include "<CHARTNAME>.containerName" (dict "prefix" $jobName "container" $i)) $container -}}
+{{- end -}}
+{{- end -}}
+{{- range $i, $container := (merge $jobContainers $cronjobContainers .Values.containers ) }}
 {{- range $volName, $volSpec := $container.persistence }}
 {{- if and $container.persistence (not $volSpec.existingClaim) }}
 ---
@@ -9,12 +21,12 @@ metadata:
   annotations:
     {{- toYaml $volSpec.annotations | nindent 4 }}
   {{- end }}
-  name: {{ include "<CHARTNAME>.pvcName" (dict "root" $ "container" $i "volumeName" $volName) }}
+  name: {{ include "<CHARTNAME>.pvcName" (dict "root" $ "container" $i "volumeName" $volName "volumeSpec" $volSpec) }}
   labels:
     {{- include "<CHARTNAME>.labels" $ | nindent 4 }}
 spec:
   accessModes:
-  {{- range $volSpec.accessModes }}
+  {{- range (required (printf "Persistence for container %s must define accessModes" $i) $volSpec.accessModes) }}
     - {{ . | quote }}
   {{- end }}
   {{- with $volSpec.resources }}

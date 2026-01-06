@@ -32,3 +32,80 @@ tests:
       - equal:
           path: metadata.annotations["example.com/annotation"]
           value: "true"
+      - equal:
+          path: spec
+          value:
+            accessModes:
+              - "ReadWriteOnce"
+            resources:
+              requests:
+                storage: 1Gi
+            storageClassName: "storageclass"
+
+  - it: Should render pvc for job, cronjob and deployment
+    values:
+      - values/persistence.yaml
+      - values/cronjobs_multiple.yaml
+      - values/jobs_multiple.yaml
+    release:
+      name: my-release
+    set:
+      nameOverride: myapp
+    template: pvc.yaml
+    asserts:
+      - hasDocuments:
+          count: 3
+
+  - it: Check correct PVC rednering for Job
+    values:    
+      - values/persistence.yaml
+      - values/cronjobs_multiple.yaml
+      - values/jobs_multiple.yaml
+    release:
+      name: my-release
+    set:
+      nameOverride: myapp
+    template: pvc.yaml
+    documentSelector:
+      path: metadata.name
+      value: data-job-my-release-myapp
+    asserts:
+      - equal:
+          path: metadata.annotations["example.com/job-annotation"]
+          value: "other"
+      - equal:
+          path: spec
+          value:
+            accessModes:
+              - "ReadWriteMany"
+            resources:
+              requests:
+                storage: 10Gi
+            storageClassName: "storageclass"
+
+  - it: Check correct PVC rednering for CronJob
+    values:    
+      - values/persistence.yaml
+      - values/cronjobs_multiple.yaml
+      - values/jobs_multiple.yaml
+    release:
+      name: my-release
+    set:
+      nameOverride: myapp
+    template: pvc.yaml
+    documentSelector:
+      path: metadata.name
+      value: data-cron-my-release-myapp
+    asserts:
+      - equal:
+          path: metadata.annotations["example.com/cronjob-annotation"]
+          value: "other annotation"
+      - equal:
+          path: spec
+          value:
+            accessModes:
+              - "ReadOnlyMany"
+            resources:
+              requests:
+                storage: 15Gi
+            storageClassName: "storageclass"

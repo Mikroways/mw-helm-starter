@@ -1,0 +1,18 @@
+containers:
+  app:
+    extraEnvFrom:
+      - secretRef:
+          name: some-name
+      - configMapRef:
+          name: another-name
+  nginx:
+    image:
+      repository: nginx
+      tag: stable
+    extraEnvFrom:
+      - configMapRef:
+          name: some-name
+    config:
+      secretEnv:
+        MY_SECRET_VAR1: "secret_value1"
+        MY_SECRET_VAR2: "secret_value2"

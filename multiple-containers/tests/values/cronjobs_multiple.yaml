@@ -1,0 +1,68 @@
+cronjobs:
+  cronjob1:
+    schedule: "* * * * */5"
+    suspend: true
+    startingDeadlineSeconds: 100
+    concurrencyPolicy: Forbid
+    successfulJobsHistoryLimit: 5
+    failedJobsHistoryLimit: 6
+    timeZone: AR
+    annotations:
+      sample_1: "some annotation"
+      other.annotation: "other value"
+    restartPolicy: Always
+    containers:
+      container1:
+        image: 
+          repository: busybox
+        command: ["echo", "Hello from job1 container1"]
+      container2:
+        image: 
+          repository: alpine
+          tag: latest
+          pullPolicy: Always
+        command: ["echo", "Hello from job1 container2"]
+        env:
+          VAR1: "value1"
+          VAR2: "value2"
+        config:
+          env:
+            MY_VAR1: "value1"
+            MY_VAR2: "value2"
+          secretEnv:
+            MY_SECRET_VAR: "secret_value1"
+        extraEnvFrom:
+          - secretRef:
+              name: extra-secret
+  cronjob2:
+    schedule: "* * * * */15"
+    backoffLimit: 10
+    ttlSecondsAfterFinished: 120
+    imagePullSecrets:
+      - name: mysecret    
+    containers:
+      container1:
+        image: 
+          repository: nginx
+        command: ["nginx", "-g", "daemon off;"]
+        persistence:
+          data-cron:
+            annotations:
+              example.com/cronjob-annotation: "other annotation"
+            accessModes:
+              - ReadOnlyMany
+            storageClassName: "storageclass"
+            resources:
+              requests:
+                storage: 15Gi
+            mountPath: "/data"
+          existingData:
+            mountPath: "/existing-data"
+            existingClaim: "my-existing-pvc"
+        extraVolumeMounts:
+          - name: my-extra-volume
+            mountPath: /my/extra/path
+            readOnly: true
+    extraVolumes:
+      - name: my-extra-volume
+        emptyDir: {}

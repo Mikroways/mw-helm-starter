@@ -2,7 +2,6 @@ containers:
   app:
     persistence:
       data:
-        accessModes:
         annotations:
           example.com/annotation: "true"
         storageClassName: "storageclass"

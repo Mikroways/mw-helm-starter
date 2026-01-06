@@ -1,0 +1,25 @@
+jobs:
+  job1:
+    containers:
+      container1:
+        image: 
+          repository: busybox
+        command: ["echo", "Hello from job1 container1"]
+      container2:
+        image: 
+          repository: alpine
+          tag: latest
+          pullPolicy: Always
+        command: ["echo", "Hello from job1 container2"]
+        env:
+          VAR1: "value1"
+          VAR2: "value2"
+        config:
+          env:
+            MY_JOB_VAR1: "job_value1"
+            MY_JOB_VAR2: "job_value2"
+          secretEnv:
+            MY_SECRET_JOB_VAR: "secret_job_value1"
+        extraEnvFrom:
+          - secretRef:
+              name: extra-secret

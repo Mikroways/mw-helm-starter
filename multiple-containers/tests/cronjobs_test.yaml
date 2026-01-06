@@ -1,0 +1,161 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test CronJobs
+templates:
+  - cronjob.yaml
+  - configmap.yaml
+  - secret.yaml
+tests:
+  - it: Should have no cronjobs rendered
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: Should have one CronJob rendered with two containers
+    values:
+      - values/cronjobs_only_one.yaml
+    release:
+      name: my-release
+    chart:
+      appVersion: 10.100.1000
+    set:
+      nameOverride: myapp
+    template: cronjob.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: cronjob1-my-release-myapp
+      - equal:
+          path: spec.schedule
+          value: "* * * * *"
+      - equal:
+          path: spec.suspend
+          value: false
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.restartPolicy
+          value: Never
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers
+          content:
+            command: ["echo", "Hello from job1 container1"]
+            name: cronjob1-container1
+            image: busybox:10.100.1000
+            imagePullPolicy: IfNotPresent
+            resources: {}
+            securityContext: {}
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers
+          content:
+            command: ["echo", "Hello from job1 container2"]
+            name: cronjob1-container2
+            env:
+              - name: VAR1
+                value: "value1"
+              - name: VAR2
+                value: "value2"
+            envFrom:
+              - configMapRef:
+                  name: cronjob1-container2-my-release-myapp
+              - secretRef:
+                  name: cronjob1-container2-my-release-myapp
+              - secretRef:
+                  name: extra-secret
+            image: alpine:latest
+            imagePullPolicy: Always
+            resources: {}
+            securityContext: {}
+  - it: Should create one configmap for job containers
+    values:
+      - values/cronjobs_only_one.yaml
+    release:
+      name: my-release
+    set:
+      nameOverride: myapp
+    template: configmap.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: cronjob1-container2-my-release-myapp
+      - equal:
+          path: data
+          value:
+            MY_CRONJOB_VAR1: "cronjob_value1"
+            MY_CRONJOB_VAR2: "cronjob_value2"
+  
+  - it: Job must render annotations and suspended
+    values:
+      - values/cronjobs_multiple.yaml
+    release:
+      name: my-release
+    set:
+      fullnameOverride: fullname
+    template: cronjob.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.annotations["sample_1"]
+          value: "some annotation"
+      - equal:
+          path: metadata.annotations["other.annotation"]
+          value: "other value"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.restartPolicy
+          value: Always
+      - equal:
+          path: spec.schedule
+          value: "* * * * */5"
+      - equal:
+          path: spec.suspend
+          value: true
+
+  - it: Two Jobs must be rendered. Second one with specific fields
+    values:
+      - values/cronjobs_multiple.yaml
+    release:
+      name: my-release
+    set:
+      fullnameOverride: fullname
+    template: cronjob.yaml
+    documentIndex: 1
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: spec.jobTemplate.spec.backoffLimit
+          value: 10
+      - equal:
+          path: spec.jobTemplate.spec.ttlSecondsAfterFinished
+          value: 120
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.imagePullSecrets
+          value: 
+            - name: mysecret
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+          content:
+            name: data-cron
+            mountPath: /data
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].volumeMounts
+          content:
+            name: existingData
+            mountPath: /existing-data
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          content:
+            name: data-cron
+            persistentVolumeClaim:
+              claimName: data-cron-fullname
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          content:
+            name: existingData
+            persistentVolumeClaim:
+              claimName: my-existing-pvc
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          content:
+            name: my-extra-volume
+            emptyDir: {}

@@ -1,0 +1,26 @@
+cronjobs:
+  cronjob1:
+    schedule: "* * * * *"
+    containers:
+      container1:
+        image: 
+          repository: busybox
+        command: ["echo", "Hello from job1 container1"]
+      container2:
+        image: 
+          repository: alpine
+          tag: latest
+          pullPolicy: Always
+        command: ["echo", "Hello from job1 container2"]
+        env:
+          VAR1: "value1"
+          VAR2: "value2"
+        config:
+          env:
+            MY_CRONJOB_VAR1: "cronjob_value1"
+            MY_CRONJOB_VAR2: "cronjob_value2"
+          secretEnv:
+            MY_SECRET_CRONJOB_VAR: "secret_cronjob_value1"
+        extraEnvFrom:
+          - secretRef:
+              name: extra-secret

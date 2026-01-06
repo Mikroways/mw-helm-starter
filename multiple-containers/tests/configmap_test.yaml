@@ -14,7 +14,7 @@ tests:
       name: my-release
     set:
       nameOverride: myapp
-    documentIndex: 0
+    tempalte: configmap.yaml
     asserts:
       - hasDocuments:
           count: 1
@@ -24,8 +24,79 @@ tests:
           path: metadata.name
           value: app-my-release-myapp
       - equal:
-          path: data.MY_VAR1
-          value: value1
+          path: data
+          value:
+            MY_VAR1: value1
+            MY_VAR2: value2
+
+  - it: Should render configmap with env vars from job, cronjob and deployment
+    values:
+      - values/jobs_only_one.yaml
+      - values/cronjobs_only_one.yaml
+      - values/container_config_env.yaml
+    release:
+      name: my-release
+    set:
+      nameOverride: myapp
+    template: configmap.yaml
+    asserts:
+      - hasDocuments:
+          count: 3
+
+  - it: Check correct configmap rednering for Job
+    values:    
+      - values/jobs_only_one.yaml
+      - values/cronjobs_only_one.yaml
+      - values/container_config_env.yaml
+    release:
+      name: my-release
+    set:
+      nameOverride: myapp
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: job1-container2-my-release-myapp
+    asserts:
       - equal:
-          path: data.MY_VAR2
-          value: value2     
+          path: data
+          value:
+            MY_JOB_VAR1: job_value1
+            MY_JOB_VAR2: job_value2
+  - it: Check correct configmap rednering for CronJob
+    values:    
+      - values/jobs_only_one.yaml
+      - values/cronjobs_only_one.yaml
+      - values/container_config_env.yaml
+    release:
+      name: my-release
+    set:
+      nameOverride: myapp
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: cronjob1-container2-my-release-myapp
+    asserts:
+      - equal:
+          path: data
+          value:
+            MY_CRONJOB_VAR1: cronjob_value1
+            MY_CRONJOB_VAR2: cronjob_value2
+  - it: Check correct configmap rednering for Deployment
+    values:    
+      - values/jobs_only_one.yaml
+      - values/cronjobs_only_one.yaml
+      - values/container_config_env.yaml
+    release:
+      name: my-release
+    set:
+      nameOverride: myapp
+    template: configmap.yaml
+    documentSelector:
+      path: metadata.name
+      value: app-my-release-myapp
+    asserts:
+      - equal:
+          path: data
+          value:
+            MY_VAR1: value1
+            MY_VAR2: value2

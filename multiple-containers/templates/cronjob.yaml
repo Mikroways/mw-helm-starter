@@ -1,0 +1,147 @@
+{{ range $cronjobName, $cronjobValues := .Values.cronjobs }}
+{{- $volumesHolder := dict }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "<CHARTNAME>.cronjobName" (dict "root" $ "cronjob" $cronjobName) }}
+  labels:
+    {{- include "<CHARTNAME>.labels" $ | nindent 4 }}
+  {{- with $cronjobValues.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  schedule: {{ required "cronjob %s requires schedule to be defined" $cronjobValues.schedule | quote}}
+  suspend: {{ default "false" $cronjobValues.suspend }}
+  {{- with $cronjobValues.startingDeadlineSeconds }}
+  startingDeadlineSeconds: {{ . }}
+  {{- end }}
+  {{- with $cronjobValues.concurrencyPolicy }}
+  concurrencyPolicy: {{ . }}
+  {{- end }}
+  {{- with $cronjobValues.successfulJobsHistoryLimit }}
+  successfulJobsHistoryLimit: {{ . }}
+  {{- end }}
+  {{- with $cronjobValues.failedJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ . }}
+  {{- end }}
+  {{- with $cronjobValues.timeZone }}
+  timeZone: {{ . }}
+  {{- end }}
+  jobTemplate:
+    spec:
+      {{- with $cronjobValues.backoffLimit }}
+      backoffLimit: {{ . }}
+      {{- end }}
+      {{- with $cronjobValues.ttlSecondsAfterFinished }}
+      ttlSecondsAfterFinished: {{ . }}
+      {{- end }}
+      template:
+        spec:
+          restartPolicy: {{ default "Never" $cronjobValues.restartPolicy }}
+          {{- with (default $.Values.imagePullSecrets $cronjobValues.imagePullSecrets) }}
+          imagePullSecrets:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "<CHARTNAME>.serviceAccountName" $ }}
+          securityContext:
+            {{- toYaml (default  $.Values.podSecurityContext $cronjobValues.podSecurityContext) | nindent 12 }}
+          {{- with $cronjobValues.initContainers }}
+          initContainers:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+          {{- range $i, $container := (required (printf "cronjob %s must define .containers dictionary" $cronjobName) $cronjobValues.containers) }}
+            - name: {{ include "<CHARTNAME>.containerName" (dict "prefix" $cronjobName "container" $i) }}
+              securityContext:
+                {{- toYaml ( default dict $container.securityContext ) | nindent 16 }}
+              image: "{{ required (printf "cronjob %s.containers.%s.image.repository is required" $cronjobName $i) (required (printf ".cronjob %s.containers.%s.image.repository is required" $cronjobName $i) $container.image).repository }}:{{ $container.image.tag | default $.Chart.AppVersion }}"
+              imagePullPolicy: {{ default $.Values.image.pullPolicy $container.image.pullPolicy }}
+              {{- if $container.env }}
+              env:
+                {{- range $key, $val := $container.env }}
+                - name: {{ $key }}
+                  value: {{ tpl $val $ | quote }}
+                {{- end }}
+              {{- end }}
+              {{- if and $container.config (or $container.config.env $container.config.secretEnv $container.extraEnvFrom) }}
+              envFrom:
+                {{- if $container.config.env }}
+                - configMapRef:
+                    name: {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" (include "<CHARTNAME>.containerName" (dict "prefix" $cronjobName "container" $i))) }}
+                {{- end }}
+                {{- if $container.config.secretEnv }}
+                - secretRef:
+                    name: {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" (include "<CHARTNAME>.containerName" (dict "prefix" $cronjobName "container" $i))) }}
+                {{- end }}
+                {{- if $container.extraEnvFrom }}
+                {{- toYaml $container.extraEnvFrom | nindent 16 }}
+                {{- end }}
+              {{- end }}
+              {{- with $container.ports }}
+              ports:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $container.command }}
+              command:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $container.args }}
+              args:
+                {{ toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $container.livenessProbe }}
+              livenessProbe:
+                {{ toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $container.readinessProbe }}
+              readinessProbe:
+                {{ toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $container.startupProbe }}
+              startupProbe:
+                {{ toYaml . | nindent 16 }}
+              {{- end }}
+              resources:
+                {{- toYaml ( default dict $container.resources ) | nindent 16 }}
+              {{- if $container.persistence }}
+              {{- $_ := set $volumesHolder $i $container.persistence }}
+              {{- end }}
+              {{- if or $container.persistence $container.extraVolumeMounts }}
+              volumeMounts:
+                {{- range $volName, $volSpec := $container.persistence }}
+                - name: {{ $volName }}
+                  mountPath: {{ required (printf "cronjob %s.containers[%d].persistence.%s.mountPath must be set" $cronjobName $i $volName) $volSpec.mountPath }}
+                {{- end }}
+                {{- range $extraMount := $container.extraVolumeMounts }}
+                - {{ toYaml $extraMount | nindent 18 }}
+                {{- end }}
+              {{- end }}
+          {{- end }}
+          {{- with $cronjobValues.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $cronjobValues.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $cronjobValues.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if or $volumesHolder $cronjobValues.extraVolumes }}
+          volumes:
+            {{- range $containers, $persistence := $volumesHolder }}
+            {{- range $volName, $volSpec := $persistence }}
+            - name: {{ $volName }}
+              persistentVolumeClaim:
+                claimName: {{ include "<CHARTNAME>.pvcName" (dict "root" $ "volumeName" $volName "volumeSpec" $volSpec) }}
+            {{- end }}
+            {{- end }}
+            {{- range $cronjobValues.extraVolumes }}
+            - {{ toYaml . | nindent 14 }}
+            {{- end }}
+          {{- end }}
+{{- end }}

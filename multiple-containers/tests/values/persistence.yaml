@@ -3,6 +3,7 @@ containers:
     persistence:
       data:
         accessModes:
+          - ReadWriteOnce
         annotations:
           example.com/annotation: "true"
         storageClassName: "storageclass"

@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test Deployment extraEnvFrom
+templates:
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+tests:
+  - it: Should have no configmap envFrom
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: app
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
+  - it: Should have configmap envFrom
+    template: deployment.yaml
+    set:
+      fullnameOverride: fullname
+    values:
+      - values/container_extra_env_from.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: app
+      - exists:
+          path: spec.template.spec.containers[0].envFrom
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: some-name
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: another-name
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: nginx
+      - contains:
+          path: spec.template.spec.containers[1].envFrom
+          content:
+            configMapRef:
+              name: some-name
+      - contains:
+          path: spec.template.spec.containers[1].envFrom
+          content:
+            secretRef:
+              name: nginx-fullname

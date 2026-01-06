@@ -1,0 +1,147 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test Jobs
+templates:
+  - job.yaml
+  - configmap.yaml
+  - secret.yaml
+tests:
+  - it: Should have no jobs rendered
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: Should have one Job rendered with two containers
+    values:
+      - values/jobs_only_one.yaml
+    release:
+      name: my-release
+    chart:
+      appVersion: 10.100.1000
+    set:
+      nameOverride: myapp
+    template: job.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: job1-my-release-myapp
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Never
+      - contains:
+          path: spec.template.spec.containers
+          content:
+            command: ["echo", "Hello from job1 container1"]
+            name: job1-container1
+            image: busybox:10.100.1000
+            imagePullPolicy: IfNotPresent
+            resources: {}
+            securityContext: {}
+      - contains:
+          path: spec.template.spec.containers
+          content:
+            command: ["echo", "Hello from job1 container2"]
+            name: job1-container2
+            env:
+              - name: VAR1
+                value: "value1"
+              - name: VAR2
+                value: "value2"
+            envFrom:
+              - configMapRef:
+                  name: job1-container2-my-release-myapp
+              - secretRef:
+                  name: job1-container2-my-release-myapp
+              - secretRef:
+                  name: extra-secret
+            image: alpine:latest
+            imagePullPolicy: Always
+            resources: {}
+            securityContext: {}
+  - it: Should create one configmap for job containers
+    values:
+      - values/jobs_only_one.yaml
+    release:
+      name: my-release
+    set:
+      nameOverride: myapp
+    template: configmap.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: job1-container2-my-release-myapp
+      - equal:
+          path: data
+          value:
+            MY_JOB_VAR1: "job_value1"
+            MY_JOB_VAR2: "job_value2"
+  - it: Job must render annotations
+    values:
+      - values/jobs_multiple.yaml
+    release:
+      name: my-release
+    set:
+      fullnameOverride: fullname
+    template: job.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.annotations["sample_1"]
+          value: "some annotation"
+      - equal:
+          path: metadata.annotations["other.annotation"]
+          value: "other value"
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Always
+  - it: Two Jobs must be rendered
+    values:
+      - values/jobs_multiple.yaml
+    release:
+      name: my-release
+    set:
+      fullnameOverride: fullname
+    template: job.yaml
+    documentIndex: 1
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: spec.backoffLimit
+          value: 10
+      - equal:
+          path: spec.ttlSecondsAfterFinished
+          value: 120
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value: 
+            - name: mysecret
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: data-job
+            mountPath: /data
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: existingData
+            mountPath: /existing-data
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data-job
+            persistentVolumeClaim:
+              claimName: data-job-fullname
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: existingData
+            persistentVolumeClaim:
+              claimName: my-existing-pvc
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: my-extra-volume
+            emptyDir: {}

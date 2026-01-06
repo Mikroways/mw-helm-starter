@@ -1,4 +1,16 @@
-{{- range $i, $container := .Values.containers }}
+{{- $cronjobContainers := dict -}}
+{{- range $cronjobName, $cronjobValues := .Values.cronjobs }}
+{{- range $i, $container := $cronjobValues.containers }}
+  {{- $_ := set $cronjobContainers (include "<CHARTNAME>.containerName" (dict "prefix" $cronjobName "container" $i)) $container -}}
+{{- end -}}
+{{- end -}}
+{{- $jobContainers := dict -}}
+{{- range $jobName, $jobValues := .Values.jobs }}
+{{- range $i, $container := $jobValues.containers }}
+  {{- $_ := set $jobContainers (include "<CHARTNAME>.containerName" (dict "prefix" $jobName "container" $i)) $container -}}
+{{- end -}}
+{{- end -}}
+{{- range $i, $container := (merge $jobContainers $cronjobContainers .Values.containers ) }}
 {{- if and $container.config $container.config.env }}
 ---
 apiVersion: v1

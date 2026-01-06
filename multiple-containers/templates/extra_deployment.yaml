@@ -1,45 +1,48 @@
+{{- $configSHA := include (print $.Template.BasePath "/configmap.yaml") . | sha256sum  -}}
+{{- $secretSHA := include (print $.Template.BasePath "/secret.yaml") . | sha256sum -}}
+{{ range $deploymentName, $deploymentValues := .Values.extraDeployments }}
 {{- $volumesHolder := dict }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "<CHARTNAME>.fullname" . }}
+  name: {{ include "<CHARTNAME>.deploymentName" (dict "root" $ "deployment" $deploymentName) }}
   labels:
-    {{- include "<CHARTNAME>.labels" . | nindent 4 }}
+    {{- include "<CHARTNAME>.labels" $ | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
+  {{- if not ( and $deploymentValues.autoscaling $deploymentValues.autoscaling.enabled ) }}
+  replicas: {{ default 1 $deploymentValues.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "<CHARTNAME>.selectorLabels" . | nindent 6 }}
+      {{- include "<CHARTNAME>.extraDeploymentSelectorLabels" (dict "root" $ "deployment" $deploymentName) | nindent 6 }}
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
-      {{- with .Values.podAnnotations }}
+        checksum/config: {{ $configSHA }}
+        checksum/secret: {{ $secretSHA }}
+      {{- with $deploymentValues.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "<CHARTNAME>.selectorLabels" . | nindent 8 }}
+        {{- include "<CHARTNAME>.extraDeploymentSelectorLabels" (dict "root" $ "deployment" $deploymentName) | nindent 8 }}
     spec:
-      {{- with .Values.imagePullSecrets }}
+      {{- with (default $.Values.imagePullSecrets $deploymentValues.imagePullSecrets) }}
       imagePullSecrets:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "<CHARTNAME>.serviceAccountName" . }}
+      serviceAccountName: {{ include "<CHARTNAME>.serviceAccountName" $ }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      {{- with .Values.initContainers }}
+        {{- toYaml (default  $.Values.podSecurityContext $deploymentValues.podSecurityContext) | nindent 8 }}
+      {{- with $deploymentValues.initContainers }}
       initContainers:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-      {{- range $i, $container := .Values.containers }}
+      {{- range $i, $container := $deploymentValues.containers }}
         - name: {{ $i }}
           securityContext:
             {{- toYaml ( default dict $container.securityContext ) | nindent 12 }}
-          image: "{{ required (printf ".containers.%s.image.repository is required" $i) (required (printf ".containers.%s.image is required" $i) $container.image).repository }}:{{ $container.image.tag | default $.Chart.AppVersion }}"
+          image: "{{ required (printf "extra Deployment %s.containers.%s.image is required" $deploymentName $i) ( required (printf "extra Deployment %s.containers.%s.image.repository is required" $deploymentName $i) $container.image).repository }}:{{ $container.image.tag | default $.Chart.AppVersion }}"
           imagePullPolicy: {{ default $.Values.image.pullPolicy $container.image.pullPolicy }}
           {{- if $container.env }}
           env:
@@ -102,19 +105,19 @@ spec:
             {{- end }}
           {{- end }}
       {{- end }}
-      {{- with .Values.nodeSelector }}
+      {{- with $deploymentValues.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with $deploymentValues.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with $deploymentValues.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if or $volumesHolder .Values.extraVolumes }}
+      {{- if or $volumesHolder $deploymentValues.extraVolumes }}
       volumes:
         {{- range $containers, $persistence := $volumesHolder }}
         {{- range $volName, $volSpec := $persistence }}
@@ -123,7 +126,8 @@ spec:
             claimName: {{ include "<CHARTNAME>.pvcName" (dict "root" $ "volumeName" $volName "volumeSpec" $volSpec) }}
         {{- end }}
         {{- end }}
-        {{- range .Values.extraVolumes }}
+        {{- range $deploymentName.extraVolumes }}
         - {{ toYaml . | nindent 10 }}
         {{- end }}
       {{- end }}
+{{- end }}
