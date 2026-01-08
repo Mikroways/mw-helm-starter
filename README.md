@@ -56,6 +56,9 @@ managing container environment variables and persistence:
   separation from `config.env` allows an independent management of secrets using
   tools like helm secret.
 * `persistence`: add support for creating and mounting volumes.
+* `jobs`: add same logic for main chart but for specific jobs. It allows to define diferent jobs using a dictionary where key will be used as job name. It also can be used to specify custom annotations to be used for example as helm hooks / argo waves.
+* `cronjobs`: same as jobs.
+* `extraDeployments`: same as jobs.
 
 ### Multiple containers
 [`multiple-containers`](./multiple-containers) extends `single-container` with multiple containers that can define same configuration but under a container name key. For example:
@@ -108,8 +111,103 @@ containers:
       httpGet:
         path: /
         port: http
+
+cronjobs:
+  cronjob1:
+    schedule: "* * * * *"
+    containers:
+      container1:
+        image: 
+          repository: busybox
+        command: ["echo", "Hello from job1 container1"]
+      container2:
+        image: 
+          repository: alpine
+          tag: latest
+          pullPolicy: Always
+        command: ["echo", "Hello from job1 container2"]
+        env:
+          VAR1: "value1"
+          VAR2: "value2"
+        config:
+          env:
+            MY_CRONJOB_VAR1: "cronjob_value1"
+            MY_CRONJOB_VAR2: "cronjob_value2"
+          secretEnv:
+            MY_SECRET_CRONJOB_VAR: "secret_cronjob_value1"
+        extraEnvFrom:
+          - secretRef:
+              name: extra-secret
+jobs:
+  job1:
+    annotations:
+      sample_1: "some annotation"
+      other.annotation: "other value"
+    restartPolicy: Always
+    containers:
+      container1:
+        image: 
+          repository: busybox
+        command: ["echo", "Hello from job1 container1"]
+      container2:
+        image: 
+          repository: alpine
+          tag: latest
+          pullPolicy: Always
+        command: ["echo", "Hello from job1 container2"]
+        env:
+          VAR1: "value1"
+          VAR2: "value2"
+        config:
+          env:
+            MY_VAR1: "value1"
+            MY_VAR2: "value2"
+          secretEnv:
+            MY_SECRET_VAR: "secret_value1"
+        extraEnvFrom:
+          - secretRef:
+              name: extra-secret
+extraDeployments:
+  deployment-two:
+    imagePullSecrets:
+      - name: mysecret   
+    containers:
+      container1:
+        image: 
+          repository: nginx
+        command: ["nginx", "-g", "daemon off;"]
+        persistence:
+          data-extra-deployment:
+            accessModes:
+              - ReadOnlyMany
+            annotations:
+              example.com/e-deploy-annotation: "other annotation for extra deployment"
+            storageClassName: "storageclass"
+            resources:
+              requests:
+                storage: 25Gi
+            mountPath: "/data"
+          existingData:
+            mountPath: "/existing-data"
+            existingClaim: "my-existing-pvc"
+        extraVolumeMounts:
+          - name: my-extra-volume
+            mountPath: /my/extra/path
+            readOnly: true
+    extraVolumes:
+      - name: my-extra-volume
+        emptyDir: {}
 ```
 
 ## Helm docs
 
-Default values are written using [helm-docs](https://github.com/norwoodj/helm-docs) format.
+Default values are written using [helm-docs](https://github.com/norwoodj/helm-docs) format. We also provide GH Actions for:
+
+* Lint charts using [helm chart testing](https://github.com/helm/chart-testing)
+* Unit test helm charts using [helm unittest plugin](https://github.com/helm-unittest/helm-unittest)
+
+# TODO
+
+* [ ] single container don't implement jobs nor cronjob templates. Single container was created with SPA applications in mind
+* [ ] add chart schemas using [helm-schema](https://github.com/dadav/helm-schema)
+* [ ] Implement gateway API templates?
