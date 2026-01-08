@@ -1,3 +1,6 @@
+# Mikroways helm charts starter: mw-helm-starter
+![Helm Test Status](https://github.com/Mikroways/mw-helm-starter/actions/workflows/helm-chart-linter.yaml/badge.svg)
+
 The main goal to this repository is to have a library of helm scaffoldings to use
 with the `helm create` command in order to:
 
