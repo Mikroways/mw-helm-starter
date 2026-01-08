@@ -10,7 +10,13 @@
   {{- $_ := set $jobContainers (include "<CHARTNAME>.containerName" (dict "prefix" $jobName "container" $i)) $container -}}
 {{- end -}}
 {{- end -}}
-{{- range $i, $container := (merge $jobContainers $cronjobContainers .Values.containers ) }}
+{{- $extraDeployentContainers := dict -}}
+{{- range $extraDeploymentName, $extraDeploymentValues := .Values.extraDeployments }}
+{{- range $i, $container := $extraDeploymentValues.containers }}
+  {{- $_ := set $extraDeployentContainers (include "<CHARTNAME>.containerName" (dict "prefix" $extraDeploymentName "container" $i)) $container -}}
+{{- end -}}
+{{- end -}}
+{{- range $i, $container := (merge $jobContainers $cronjobContainers $extraDeployentContainers .Values.containers ) }}
 {{- range $volName, $volSpec := $container.persistence }}
 {{- if and $container.persistence (not $volSpec.existingClaim) }}
 ---

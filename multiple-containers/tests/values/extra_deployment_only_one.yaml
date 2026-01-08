@@ -1,0 +1,25 @@
+extraDeployments:
+  deployment-one:
+    containers:
+      container1:
+        image: 
+          repository: busybox
+        command: ["echo", "Hello from job1 container1"]
+      container2:
+        image: 
+          repository: alpine
+          tag: latest
+          pullPolicy: Always
+        command: ["echo", "Hello from job1 container2"]
+        env:
+          VAR1: "value1"
+          VAR2: "value2"
+        config:
+          env:
+            MY_EXTRA_DEPLOYMENT_VAR1: "value1"
+            MY_EXTRA_DEPLOYMENT_VAR2: "value2"
+          secretEnv:
+            MY_SECRET_EXTRA_DEPLOYMENT_VAR: "secret_value1"
+        extraEnvFrom:
+          - secretRef:
+              name: extra-secret

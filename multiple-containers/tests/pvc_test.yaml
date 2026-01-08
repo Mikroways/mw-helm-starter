@@ -47,6 +47,7 @@ tests:
       - values/persistence.yaml
       - values/cronjobs_multiple.yaml
       - values/jobs_multiple.yaml
+      - values/extra_deployment_multiple.yaml      
     release:
       name: my-release
     set:
@@ -54,13 +55,14 @@ tests:
     template: pvc.yaml
     asserts:
       - hasDocuments:
-          count: 3
+          count: 4
 
   - it: Check correct PVC rednering for Job
     values:    
       - values/persistence.yaml
       - values/cronjobs_multiple.yaml
       - values/jobs_multiple.yaml
+      - values/extra_deployment_multiple.yaml            
     release:
       name: my-release
     set:
@@ -88,6 +90,7 @@ tests:
       - values/persistence.yaml
       - values/cronjobs_multiple.yaml
       - values/jobs_multiple.yaml
+      - values/extra_deployment_multiple.yaml            
     release:
       name: my-release
     set:
@@ -108,4 +111,32 @@ tests:
             resources:
               requests:
                 storage: 15Gi
+            storageClassName: "storageclass"
+
+  - it: Check correct PVC rednering for Extra Deployment
+    values:    
+      - values/persistence.yaml
+      - values/cronjobs_multiple.yaml
+      - values/jobs_multiple.yaml
+      - values/extra_deployment_multiple.yaml            
+    release:
+      name: my-release
+    set:
+      nameOverride: myapp
+    template: pvc.yaml
+    documentSelector:
+      path: metadata.name
+      value: data-extra-deployment-my-release-myapp
+    asserts:
+      - equal:
+          path: metadata.annotations["example.com/e-deploy-annotation"]
+          value: "other annotation for extra deployment"
+      - equal:
+          path: spec
+          value:
+            accessModes:
+              - "ReadOnlyMany"
+            resources:
+              requests:
+                storage: 25Gi
             storageClassName: "storageclass"

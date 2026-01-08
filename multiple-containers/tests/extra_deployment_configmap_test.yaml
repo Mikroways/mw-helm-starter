@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test Extra Deployment envFrom ConfigMap
+templates:
+  - configmap.yaml
+  - secret.yaml
+  - extra_deployment.yaml  
+tests:
+  - it: Should have configmap envFrom
+    template: extra_deployment.yaml
+    values:
+      - values/extra_deployment_container_config_env.yaml
+    set:
+      fullnameOverride: fullname
+    asserts:
+      - hasDocuments:
+          count: 1 # because original deployment is created
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: deployment-one-app
+      - exists:
+          path: spec.template.spec.containers[0].envFrom
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: deployment-one-app-fullname

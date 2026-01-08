@@ -2,6 +2,7 @@
 {{- $secretSHA := include (print $.Template.BasePath "/secret.yaml") . | sha256sum -}}
 {{ range $deploymentName, $deploymentValues := .Values.extraDeployments }}
 {{- $volumesHolder := dict }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -39,7 +40,7 @@ spec:
       {{- end }}
       containers:
       {{- range $i, $container := $deploymentValues.containers }}
-        - name: {{ $i }}
+        - name: {{ include "<CHARTNAME>.containerName" (dict "prefix" $deploymentName "container" $i) }}
           securityContext:
             {{- toYaml ( default dict $container.securityContext ) | nindent 12 }}
           image: "{{ required (printf "extra Deployment %s.containers.%s.image is required" $deploymentName $i) ( required (printf "extra Deployment %s.containers.%s.image.repository is required" $deploymentName $i) $container.image).repository }}:{{ $container.image.tag | default $.Chart.AppVersion }}"
@@ -55,11 +56,11 @@ spec:
           envFrom:
             {{- if or $container.config.env }}
             - configMapRef:
-                name: {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" $i) }}
+                name: {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" (include "<CHARTNAME>.containerName" (dict "prefix" $deploymentName "container" $i))) }}
             {{- end }}
             {{- if $container.config.secretEnv }}
             - secretRef:
-                name: {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" $i) }}
+                name: {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" (include "<CHARTNAME>.containerName" (dict "prefix" $deploymentName "container" $i))) }}
             {{- end }}
             {{- if $container.extraEnvFrom }}
             {{- toYaml $container.extraEnvFrom | nindent 12 }}
@@ -126,7 +127,7 @@ spec:
             claimName: {{ include "<CHARTNAME>.pvcName" (dict "root" $ "volumeName" $volName "volumeSpec" $volSpec) }}
         {{- end }}
         {{- end }}
-        {{- range $deploymentName.extraVolumes }}
+        {{- range $deploymentValues.extraVolumes }}
         - {{ toYaml . | nindent 10 }}
         {{- end }}
       {{- end }}

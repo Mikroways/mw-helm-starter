@@ -1,12 +1,6 @@
 extraDeployments:
   deployment-one:
       containers:
-        one_app:
-          image:
-            repository: alpine
-          env:
-            APP_ENV: production
-            APP_DEBUG: "false"
         app_with_env_and_env_from:
           image:
             repository: my-app
@@ -15,6 +9,13 @@ extraDeployments:
           config:
             env:
               LOGGER: file
+        container_with_args:
+          image:
+              repository: my-args-app
+          args:
+            - --config
+            - /etc/myapp/config.yaml
+            - --verbose              
         container_with_command:
           image:
             repository: my-command-app
@@ -24,10 +25,9 @@ extraDeployments:
             - |
               echo "Starting application..."
               exec my-app
-        container_with_args:
+        one_app:
           image:
-              repository: my-args-app
-          args:
-            - --config
-            - /etc/myapp/config.yaml
-            - --verbose
+            repository: alpine
+          env:
+            APP_ENV: production
+            APP_DEBUG: "false"

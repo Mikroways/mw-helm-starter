@@ -1,0 +1,58 @@
+extraDeployments:
+  deployment-one:
+    annotations:
+      sample_1: "some annotation"
+      other.annotation: "other value"
+    restartPolicy: Always
+    containers:
+      container1:
+        image: 
+          repository: busybox
+        command: ["echo", "Hello from job1 container1"]
+      container2:
+        image: 
+          repository: alpine
+          tag: latest
+          pullPolicy: Always
+        command: ["echo", "Hello from job1 container2"]
+        env:
+          VAR1: "value1"
+          VAR2: "value2"
+        config:
+          env:
+            MY_VAR1: "value1"
+            MY_VAR2: "value2"
+          secretEnv:
+            MY_SECRET_VAR: "secret_value1"
+        extraEnvFrom:
+          - secretRef:
+              name: extra-secret
+  deployment-two:
+    imagePullSecrets:
+      - name: mysecret   
+    containers:
+      container1:
+        image: 
+          repository: nginx
+        command: ["nginx", "-g", "daemon off;"]
+        persistence:
+          data-extra-deployment:
+            accessModes:
+              - ReadOnlyMany
+            annotations:
+              example.com/e-deploy-annotation: "other annotation for extra deployment"
+            storageClassName: "storageclass"
+            resources:
+              requests:
+                storage: 25Gi
+            mountPath: "/data"
+          existingData:
+            mountPath: "/existing-data"
+            existingClaim: "my-existing-pvc"
+        extraVolumeMounts:
+          - name: my-extra-volume
+            mountPath: /my/extra/path
+            readOnly: true
+    extraVolumes:
+      - name: my-extra-volume
+        emptyDir: {}

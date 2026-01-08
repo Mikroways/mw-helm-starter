@@ -1,0 +1,10 @@
+extraDeployments:
+  deployment-one:
+    containers:
+      app:
+        image:
+          repository: my-app
+        config:
+          env:
+            MY_EXTRA_DEPLOYMENT_VAR1: "value1"
+            MY_EXTRA_DEPLOYMENT_VAR2: "value2"

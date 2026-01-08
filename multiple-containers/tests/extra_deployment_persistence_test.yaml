@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: Test Extra Deployment with multiple objects and Persistence
+templates:
+  - configmap.yaml
+  - secret.yaml  
+  - extra_deployment.yaml  
+tests:
+  - it: Should have two
+    template: extra_deployment.yaml
+    values:
+      - values/extra_deployment_multiple.yaml
+    set:
+      fullnameOverride: fullname
+    documentSelector:
+      path: metadata.name
+      value: deployment-two-fullname
+    asserts:
+      - hasDocuments:
+          count: 2        
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: deployment-two-container1
+      - exists:
+          path: spec.template.spec.containers[0].volumeMounts
+      - exists:
+          path: spec.template.spec.volumes
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: data-extra-deployment
+            mountPath: /data
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: existingData
+            mountPath: /existing-data

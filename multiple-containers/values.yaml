@@ -245,6 +245,10 @@ jobs: {}
   #       image:
   #         repository: nginx
   #       command: ["nginx", "-g", "daemon off;"]
+  #       config:
+  #         env: {}
+  #       config:
+  #         secretEnv: {}
   #       extraEnvFrom:
   #          - secretRef:
   #            name: extra-secret
