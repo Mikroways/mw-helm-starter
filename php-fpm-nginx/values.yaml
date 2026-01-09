@@ -31,7 +31,9 @@ initContainers: []
   #   command: ['sh', '-c', 'echo The app is running! && sleep 3600']
 
 containers:
-  # -- FPM container configuration
+  # -- FPM container configuration. Key will be used as name of containers and 
+  # other resources like configmaps, secrets or persistentVolumes. In this case
+  # **app** us used
   app:
     image:
       # -- Image to use for deploying
@@ -326,3 +328,51 @@ affinity: {}
 extraVolumes: []
   # - name: my-extra-volume
   #   emptyDir: {}
+
+# -- Dictionary of cronjobs. Key is the cronjob name and value repeats a deployment podTemplate adding custom cronjob fields. Please see values.yaml for commented examples.
+cronjobs: {}
+# cronjob-one:
+
+
+# -- Dictionary of jobs. Key is the job name and value repeats a deployment podTemplate adding custom cronjob fields. Please see values.yaml for commented examples.
+jobs: {}
+  # job-one:
+  #   backoffLimit: 1
+  #   ttlSecondsAfterFinished: 120
+  #   restartPolicy: Never
+  #   imagePullSecret:
+  #     - name: regcred
+  #   containers:
+  #     container1:
+  #       image:
+  #         repository: nginx
+  #       command: ["nginx", "-g", "daemon off;"]
+  #       config:
+  #         env: {}
+  #       config:
+  #         secretEnv: {}
+  #       extraEnvFrom:
+  #          - secretRef:
+  #            name: extra-secret
+  #       persistence:
+  #         data:
+  #           annotations:
+  #             example.com/annotation: "true"
+  #           storageClassName: "storageclass"
+  #           resources:
+  #             requests:
+  #               storage: 1Gi
+  #           mountPath: "/data"
+  #         existingData:
+  #           mountPath: "/existing-data"
+  #           existingClaim: "my-existing-pvc"
+  #       extraVolumeMounts:
+  #         - name: my-extra-volume
+  #           mountPath: /my/extra/path
+  #           readOnly: true
+  #   extraVolumes:
+  #     - name: my-extra-volume
+  #       emptyDir: {}
+
+# -- Dictionary of extra Deplouments. Key is the deployment name and value repeats a deployment podTemplate adding custom cronjob fields. Please see values.yaml for commented examples.
+extraDeplyments: {}
