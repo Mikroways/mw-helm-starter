@@ -59,12 +59,16 @@ managing container environment variables and persistence:
   separation from `config.env` allows an independent management of secrets using
   tools like helm secret.
 * `persistence`: add support for creating and mounting volumes.
+
+
+### Multiple containers
+[`multiple-containers`](./multiple-containers) extends `single-container` with multiple containers that can define same configuration but under a container name key. It also adds:
+
 * `jobs`: add same logic for main chart but for specific jobs. It allows to define diferent jobs using a dictionary where key will be used as job name. It also can be used to specify custom annotations to be used for example as helm hooks / argo waves.
 * `cronjobs`: same as jobs.
 * `extraDeployments`: same as jobs.
 
-### Multiple containers
-[`multiple-containers`](./multiple-containers) extends `single-container` with multiple containers that can define same configuration but under a container name key. For example:
+For example:
 
 ```yaml
 containers:
