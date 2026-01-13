@@ -63,6 +63,7 @@ jobs:
       job3-container1:
         image: 
           repository: busybox
+          tag: 1.10.100
         extraEnvFrom:
           - secretRef:
               name: extra-secret
