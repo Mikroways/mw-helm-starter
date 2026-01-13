@@ -9,6 +9,10 @@ image:
   # -- Global image pullPolicy defined as default value when a container dont set
   # this value
   pullPolicy: IfNotPresent
+  # -- Main image repository defined as default values when container dont set
+  # this value
+  repository: nginx
+
 
 # -- Array of initContainers. Each element can use fields as explained by
 # `kubectl explain pod.spec.initContainers[]`
