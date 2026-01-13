@@ -158,7 +158,7 @@ tests:
       - contains:
           path: spec.template.spec.containers
           content:
-            image: busybox:0.1.0
+            image: busybox:1.0.0
             imagePullPolicy: IfNotPresent
             name: job3-container1
             resources: {}
