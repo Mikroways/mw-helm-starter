@@ -36,71 +36,7 @@ spec:
       {{- end }}
       containers:
       {{- range $i, $container := .Values.containers }}
-        - name: {{ $i }}
-          securityContext:
-            {{- toYaml ( default dict $container.securityContext ) | nindent 12 }}
-          image: "{{ required (printf ".containers.%s.image.repository is required" $i) (required (printf ".containers.%s.image is required" $i) $container.image).repository }}:{{ $container.image.tag | default $.Chart.AppVersion }}"
-          imagePullPolicy: {{ default $.Values.image.pullPolicy $container.image.pullPolicy }}
-          {{- if $container.env }}
-          env:
-            {{- range $key, $val := $container.env }}
-            - name: {{ $key }}
-              value: {{ tpl $val $ | quote }}
-            {{- end }}
-          {{- end }}
-          {{- if and $container.config (or $container.config.env $container.config.secretEnv $container.extraEnvFrom) }}
-          envFrom:
-            {{- if or $container.config.env }}
-            - configMapRef:
-                name: {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" $i) }}
-            {{- end }}
-            {{- if $container.config.secretEnv }}
-            - secretRef:
-                name: {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" $i) }}
-            {{- end }}
-            {{- if $container.extraEnvFrom }}
-            {{- toYaml $container.extraEnvFrom | nindent 12 }}
-            {{- end }}
-          {{- end }}
-          {{- with $container.ports }}
-          ports:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with $container.command }}
-          command:
-            {{ toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with $container.args }}
-          args:
-            {{ toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with $container.livenessProbe }}
-          livenessProbe:
-            {{ toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with $container.readinessProbe }}
-          readinessProbe:
-            {{ toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with $container.startupProbe }}
-          startupProbe:
-            {{ toYaml . | nindent 12 }}
-          {{- end }}
-          resources:
-            {{- toYaml ( default dict $container.resources ) | nindent 12 }}
-          {{- if $container.persistence }}
-          {{- $_ := set $volumesHolder $i $container.persistence -}}
-          {{- end }}
-          {{- if or $container.persistence $container.extraVolumeMounts }}
-          volumeMounts:
-            {{- range $volName, $volSpec := $container.persistence }}
-            - name: {{ $volName }}
-              mountPath: {{ required (printf "containers[%d].persistence.%s.mountPath must be set" $i $volName) $volSpec.mountPath }}
-            {{- end }}
-            {{- range $extraMount := $container.extraVolumeMounts }}
-            - {{ toYaml $extraMount | nindent 14 }}
-            {{- end }}
-          {{- end }}
+        - {{- include "<CHARTNAME>.containerManifest" (dict "root" $ "containerName" $i "container" $container "objectDescription" "Deployment" "objectName"  (include "<CHARTNAME>.fullname" $) "volumesHolder" $volumesHolder ) | nindent  10 }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

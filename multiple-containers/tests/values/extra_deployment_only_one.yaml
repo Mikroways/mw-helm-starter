@@ -5,7 +5,7 @@ extraDeployments:
         image: 
           repository: busybox
         command: ["echo", "Hello from job1 container1"]
-      container2:
+      deployment-one-container2:
         image: 
           repository: alpine
           tag: latest

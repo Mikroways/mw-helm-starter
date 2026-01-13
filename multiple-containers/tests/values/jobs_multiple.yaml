@@ -5,11 +5,11 @@ jobs:
       other.annotation: "other value"
     restartPolicy: Always
     containers:
-      container1:
+      job1-container1:
         image: 
           repository: busybox
         command: ["echo", "Hello from job1 container1"]
-      container2:
+      job1-container2:
         image: 
           repository: alpine
           tag: latest
@@ -33,7 +33,7 @@ jobs:
     imagePullSecrets:
       - name: mysecret   
     containers:
-      container1:
+      job2-container1:
         image: 
           repository: nginx
         command: ["nginx", "-g", "daemon off;"]
@@ -58,3 +58,11 @@ jobs:
     extraVolumes:
       - name: my-extra-volume
         emptyDir: {}
+  job3:
+    containers:
+      job3-container1:
+        image: 
+          repository: busybox
+        extraEnvFrom:
+          - secretRef:
+              name: extra-secret

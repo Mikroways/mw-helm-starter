@@ -109,16 +109,6 @@ If release name contains chart name it will be used as a full name.
 {{- printf "%s-%s" .deployment (include "<CHARTNAME>.fullname" .root ) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-
-{{/*
-Create a default containerName using prefix
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
-*/}}
-{{- define "<CHARTNAME>.containerName" -}}
-{{- printf "%s-%s" .prefix .container  | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
 {{/*
 Selector labels for extra Deployment
 */}}

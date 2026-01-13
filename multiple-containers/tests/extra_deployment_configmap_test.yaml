@@ -16,11 +16,11 @@ tests:
           count: 1 # because original deployment is created
       - equal:
           path: spec.template.spec.containers[0].name
-          value: deployment-one-app
+          value: app
       - exists:
           path: spec.template.spec.containers[0].envFrom
       - contains:
           path: spec.template.spec.containers[0].envFrom
           content:
             configMapRef:
-              name: deployment-one-app-fullname
+              name: app-fullname

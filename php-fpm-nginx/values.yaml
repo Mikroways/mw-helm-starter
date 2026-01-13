@@ -31,7 +31,7 @@ initContainers: []
   #   command: ['sh', '-c', 'echo The app is running! && sleep 3600']
 
 containers:
-  # -- FPM container configuration. Key will be used as name of containers and 
+  # -- FPM container configuration. Key will be used as name of containers and
   # other resources like configmaps, secrets or persistentVolumes. In this case
   # **app** us used
   app:

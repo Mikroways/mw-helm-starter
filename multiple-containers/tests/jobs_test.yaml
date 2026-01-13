@@ -32,7 +32,7 @@ tests:
           path: spec.template.spec.containers
           content:
             command: ["echo", "Hello from job1 container1"]
-            name: job1-container1
+            name: container1
             image: busybox:10.100.1000
             imagePullPolicy: IfNotPresent
             resources: {}
@@ -96,7 +96,7 @@ tests:
       - equal:
           path: spec.template.spec.restartPolicy
           value: Always
-  - it: Two Jobs must be rendered
+  - it: Three Jobs must be rendered
     values:
       - values/jobs_multiple.yaml
     release:
@@ -107,7 +107,7 @@ tests:
     documentIndex: 1
     asserts:
       - hasDocuments:
-          count: 2
+          count: 3
       - equal:
           path: spec.backoffLimit
           value: 10
@@ -145,3 +145,24 @@ tests:
           content:
             name: my-extra-volume
             emptyDir: {}
+  - it: Jobs must render extraEnvFrom
+    values:
+      - values/jobs_multiple.yaml
+    release:
+      name: my-release
+    set:
+      fullnameOverride: fullname
+    template: job.yaml
+    documentIndex: 2
+    asserts:
+      - contains:
+          path: spec.template.spec.containers
+          content:
+            image: busybox:0.1.0
+            imagePullPolicy: IfNotPresent
+            name: job3-container1
+            resources: {}
+            securityContext: {}
+            envFrom:
+              - secretRef:
+                  name: extra-secret

@@ -42,7 +42,7 @@ tests:
                 storage: 1Gi
             storageClassName: "storageclass"
 
-  - it: Should render pvc for job, cronjob and deployment
+  - it: Should render pvc for job, cronjob, deployment and extra deployment
     values:
       - values/persistence.yaml
       - values/cronjobs_multiple.yaml

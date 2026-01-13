@@ -28,7 +28,11 @@ tests:
           value:
             MY_VAR1: value1
             MY_VAR2: value2
-
+      - equal:
+          path: metadata.annotations
+          value:
+            some: annotation
+            
   - it: Should render configmap with env vars from job, cronjob, deployment and extra_deployment
     values:
       - values/jobs_only_one.yaml
@@ -44,7 +48,7 @@ tests:
       - hasDocuments:
           count: 4
 
-  - it: Check correct configmap rednering for Job
+  - it: Check correct configmap rendering for Job
     values:    
       - values/jobs_only_one.yaml
       - values/cronjobs_only_one.yaml
@@ -64,7 +68,7 @@ tests:
           value:
             MY_JOB_VAR1: job_value1
             MY_JOB_VAR2: job_value2
-  - it: Check correct configmap rednering for CronJob
+  - it: Check correct configmap rendering for CronJob
     values:    
       - values/jobs_only_one.yaml
       - values/cronjobs_only_one.yaml
@@ -85,7 +89,7 @@ tests:
             MY_CRONJOB_VAR1: cronjob_value1
             MY_CRONJOB_VAR2: cronjob_value2
 
-  - it: Check correct configmap rednering for Extra Deployment
+  - it: Check correct configmap rendering for Extra Deployment
     values:    
       - values/jobs_only_one.yaml
       - values/cronjobs_only_one.yaml
@@ -106,7 +110,7 @@ tests:
             MY_EXTRA_DEPLOYMENT_VAR1: value1
             MY_EXTRA_DEPLOYMENT_VAR2: value2
 
-  - it: Check correct configmap rednering for Deployment
+  - it: Check correct configmap rendering for Deployment
     values:    
       - values/jobs_only_one.yaml
       - values/cronjobs_only_one.yaml

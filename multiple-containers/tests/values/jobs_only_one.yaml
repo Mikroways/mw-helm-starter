@@ -5,7 +5,7 @@ jobs:
         image: 
           repository: busybox
         command: ["echo", "Hello from job1 container1"]
-      container2:
+      job1-container2:
         image: 
           repository: alpine
           tag: latest

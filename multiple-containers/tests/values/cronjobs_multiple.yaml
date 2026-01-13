@@ -12,7 +12,7 @@ cronjobs:
       other.annotation: "other value"
     restartPolicy: Always
     containers:
-      container1:
+      cronjob1-container1:
         image: 
           repository: busybox
         command: ["echo", "Hello from job1 container1"]
@@ -41,7 +41,7 @@ cronjobs:
     imagePullSecrets:
       - name: mysecret    
     containers:
-      container1:
+      cronjob2-container1:
         image: 
           repository: nginx
         command: ["nginx", "-g", "daemon off;"]

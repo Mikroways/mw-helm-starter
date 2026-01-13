@@ -1,22 +1,22 @@
 {{- $cronjobContainers := dict -}}
 {{- range $cronjobName, $cronjobValues := .Values.cronjobs }}
 {{- range $i, $container := $cronjobValues.containers }}
-  {{- $_ := set $cronjobContainers (include "<CHARTNAME>.containerName" (dict "prefix" $cronjobName "container" $i)) $container -}}
+  {{- $_ := set $cronjobContainers $i $container -}}
 {{- end -}}
 {{- end -}}
 {{- $jobContainers := dict -}}
 {{- range $jobName, $jobValues := .Values.jobs }}
 {{- range $i, $container := $jobValues.containers }}
-  {{- $_ := set $jobContainers (include "<CHARTNAME>.containerName" (dict "prefix" $jobName "container" $i)) $container -}}
+  {{- $_ := set $jobContainers $i $container -}}
 {{- end -}}
 {{- end -}}
-{{- $extraDeployentContainers := dict -}}
-{{- range $extraDeploymentName, $extraDeploymentValues := .Values.extraDeployments }}
-{{- range $i, $container := $extraDeploymentValues.containers }}
-  {{- $_ := set $extraDeployentContainers (include "<CHARTNAME>.containerName" (dict "prefix" $extraDeploymentName "container" $i)) $container -}}
+{{- $extraDeploymentContainers := dict -}}
+{{- range $deploymentName, $deploymentValues := .Values.extraDeployments }}
+{{- range $i, $container := $deploymentValues.containers }}
+  {{- $_ := set $extraDeploymentContainers $i $container -}}
 {{- end -}}
 {{- end -}}
-{{- range $i, $container := (merge $jobContainers $cronjobContainers $extraDeployentContainers .Values.containers ) }}
+{{- range $i, $container := (merge $jobContainers $cronjobContainers $extraDeploymentContainers .Values.containers ) }}
 {{- range $volName, $volSpec := $container.persistence }}
 {{- if and $container.persistence (not $volSpec.existingClaim) }}
 ---

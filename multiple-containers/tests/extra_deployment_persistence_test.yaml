@@ -19,7 +19,7 @@ tests:
           count: 2        
       - equal:
           path: spec.template.spec.containers[0].name
-          value: deployment-two-container1
+          value: container1
       - exists:
           path: spec.template.spec.containers[0].volumeMounts
       - exists:

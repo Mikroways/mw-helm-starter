@@ -53,71 +53,7 @@ spec:
           {{- end }}
           containers:
           {{- range $i, $container := (required (printf "cronjob %s must define .containers dictionary" $cronjobName) $cronjobValues.containers) }}
-            - name: {{ include "<CHARTNAME>.containerName" (dict "prefix" $cronjobName "container" $i) }}
-              securityContext:
-                {{- toYaml ( default dict $container.securityContext ) | nindent 16 }}
-              image: "{{ required (printf "cronjob %s.containers.%s.image.repository is required" $cronjobName $i) (required (printf ".cronjob %s.containers.%s.image.repository is required" $cronjobName $i) $container.image).repository }}:{{ $container.image.tag | default $.Chart.AppVersion }}"
-              imagePullPolicy: {{ default $.Values.image.pullPolicy $container.image.pullPolicy }}
-              {{- if $container.env }}
-              env:
-                {{- range $key, $val := $container.env }}
-                - name: {{ $key }}
-                  value: {{ tpl $val $ | quote }}
-                {{- end }}
-              {{- end }}
-              {{- if and $container.config (or $container.config.env $container.config.secretEnv $container.extraEnvFrom) }}
-              envFrom:
-                {{- if $container.config.env }}
-                - configMapRef:
-                    name: {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" (include "<CHARTNAME>.containerName" (dict "prefix" $cronjobName "container" $i))) }}
-                {{- end }}
-                {{- if $container.config.secretEnv }}
-                - secretRef:
-                    name: {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" (include "<CHARTNAME>.containerName" (dict "prefix" $cronjobName "container" $i))) }}
-                {{- end }}
-                {{- if $container.extraEnvFrom }}
-                {{- toYaml $container.extraEnvFrom | nindent 16 }}
-                {{- end }}
-              {{- end }}
-              {{- with $container.ports }}
-              ports:
-                {{- toYaml . | nindent 16 }}
-              {{- end }}
-              {{- with $container.command }}
-              command:
-                {{- toYaml . | nindent 16 }}
-              {{- end }}
-              {{- with $container.args }}
-              args:
-                {{ toYaml . | nindent 16 }}
-              {{- end }}
-              {{- with $container.livenessProbe }}
-              livenessProbe:
-                {{ toYaml . | nindent 16 }}
-              {{- end }}
-              {{- with $container.readinessProbe }}
-              readinessProbe:
-                {{ toYaml . | nindent 16 }}
-              {{- end }}
-              {{- with $container.startupProbe }}
-              startupProbe:
-                {{ toYaml . | nindent 16 }}
-              {{- end }}
-              resources:
-                {{- toYaml ( default dict $container.resources ) | nindent 16 }}
-              {{- if $container.persistence }}
-              {{- $_ := set $volumesHolder $i $container.persistence }}
-              {{- end }}
-              {{- if or $container.persistence $container.extraVolumeMounts }}
-              volumeMounts:
-                {{- range $volName, $volSpec := $container.persistence }}
-                - name: {{ $volName }}
-                  mountPath: {{ required (printf "cronjob %s.containers[%d].persistence.%s.mountPath must be set" $cronjobName $i $volName) $volSpec.mountPath }}
-                {{- end }}
-                {{- range $extraMount := $container.extraVolumeMounts }}
-                - {{ toYaml $extraMount | nindent 18 }}
-                {{- end }}
-              {{- end }}
+            - {{- include "<CHARTNAME>.containerManifest" (dict "root" $ "containerName" $i "container" $container "objectDescription" "Cronjob" "objectName" (include "<CHARTNAME>.cronjobName" (dict "root" $ "cronjob" $cronjobName)) "volumesHolder" $volumesHolder ) | nindent  14 }}
           {{- end }}
           {{- with $cronjobValues.nodeSelector }}
           nodeSelector:

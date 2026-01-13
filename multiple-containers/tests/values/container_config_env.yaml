@@ -1,6 +1,8 @@
 containers:
   app:
     config:
+      envAnnotations:
+        some: annotation
       env:
         MY_VAR1: "value1"
         MY_VAR2: "value2"

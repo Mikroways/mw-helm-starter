@@ -34,14 +34,14 @@ tests:
           count: 1
       - equal:
           path: spec.template.spec.containers[0].name
-          value: deployment-one-app_with_env_and_env_from
+          value: app_with_env_and_env_from
       - notExists:
           path: spec.template.spec.containers[0].command
       - notExists:
           path: spec.template.spec.containers[0].args
       - equal:
           path: spec.template.spec.containers[2].name
-          value: deployment-one-container_with_command
+          value: container_with_command
       - exists:
           path: spec.template.spec.containers[2].command
       - equal:
@@ -54,7 +54,7 @@ tests:
               exec my-app
       - equal:
           path: spec.template.spec.containers[1].name
-          value: deployment-one-container_with_args
+          value: container_with_args
       - exists:
           path: spec.template.spec.containers[1].args
       - equal:

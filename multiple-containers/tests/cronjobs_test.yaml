@@ -38,7 +38,7 @@ tests:
           path: spec.jobTemplate.spec.template.spec.containers
           content:
             command: ["echo", "Hello from job1 container1"]
-            name: cronjob1-container1
+            name: container1
             image: busybox:10.100.1000
             imagePullPolicy: IfNotPresent
             resources: {}

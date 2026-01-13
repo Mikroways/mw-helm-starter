@@ -9,6 +9,7 @@ image:
   # -- Global image pullPolicy defined as default value when a container dont set
   # this value
   pullPolicy: IfNotPresent
+  repository: "nginx"
 
 # -- Array of initContainers. Each element can use fields as explained by
 # `kubectl explain pod.spec.initContainers[]`
@@ -36,7 +37,7 @@ containers:
   app:
     image:
       # -- Image to use for deploying
-      repository: nginx
+      repository: ""
       # -- Image pullPolicy
       pullPolicy: IfNotPresent
       # -- Overrides the image tag whose default is the chart appVersion.
@@ -58,10 +59,14 @@ containers:
     env: {}
 
     config:
+      # -- Configmap annotations. Useful for helm hooks / ArgoCD waves
+      envAnnotations: {}
+      # -- Secret annotations. Useful for helm hooks / ArgoCD waves
+      secretEnvAnnotations: {}
       # --Key value pairs created using a ConfigMap and rendered as environment
       # variables inside container.Allows gotpl expressions, for example:
       # `MY_AWSOME_TPL_ENV_VAR: "{{ .Values.global.myAwesomeEnvVar }}"`
-      env: {}
+      env:
         # MY_AWESOME_ENV_VAR: "my awesome var"
         # MY_AWSOME_TPL_ENV_VAR: "{{ .Values.global.myAwesomeEnvVar }}"
 
