@@ -12,6 +12,9 @@ image:
   # -- Main image repository defined as default values when container dont set
   # this value
   repository: nginx
+  # -- Main image tag defined as default values when container dont set
+  # this value. If empty ues Chart.appVersion
+  tag: ""
 
 
 # -- Array of initContainers. Each element can use fields as explained by
@@ -44,7 +47,7 @@ containers:
       repository: php-fpm
       # -- Image pullPolicy
       pullPolicy: IfNotPresent
-      # -- Overrides the image tag whose default is the chart appVersion.
+      # -- Overrides the image tag whose default is the main image or chart appVersion.
       tag: ""
 
     # -- We usually recommend not to specify default resources and to leave this as
@@ -81,8 +84,8 @@ containers:
     # `kubectl explain pod.spec.containers[].ports`
     ports: []
     # - name: http
-    #   containerPot: 8080
-    #   protcolo: TCP
+    #   containerPort: 8080
+    #   protocol: TCP
 
     # -- Enable persistence using a PersistentVolumeClaims. Dictionary keys are
     # used as volume names, and values is the configuration of each volume.
@@ -102,7 +105,16 @@ containers:
       #     #   storage: 1Gi
       #   # -- where volume should be mounted on. Required. For example: `/data`
       #   mountPath: ""
+    # -- Array of extra volume mounts to be added to the container. Each element can use
+    # fields as explained by `kubectl explain pod.spec.containers[].volumeMounts`
+    extraVolumeMounts: []
+      # - name: my-extra-volume
+      #   mountPath: /my/extra/path
+      #   readOnly: true
 
+    # @schema
+    # additionalProperties: true
+    # @schema
     # @ignored
     securityContext: {}
       # capabilities:
@@ -181,8 +193,8 @@ containers:
     # `kubectl explain pod.spec.containers[].ports`
     ports:
       - name: http
-        containerPot: 8080
-        protcolo: TCP
+        containerPort: 8080
+        protocol: TCP
 
     # -- Enable persistence using a PersistentVolumeClaims. Dictionary keys are
     # used as volume names, and values is the configuration of each volume.
@@ -269,6 +281,11 @@ podSecurityContext: {}
 
 service:
   type: ClusterIP
+
+  # -- Whic service port will be used when multiple containers and ports can be
+  # defined. Each element can use fields as explained by
+  ingressPort: 8080
+
   # -- Array of service ports. Each element can use fields as explained by
   # `kubectl explain service.spec.ports`
   ports: []
@@ -316,7 +333,7 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
 
 # @ignored
 nodeSelector: {}
@@ -338,45 +355,118 @@ cronjobs: {}
 # cronjob-one:
 
 
-# -- Dictionary of jobs. Key is the job name and value repeats a deployment podTemplate adding custom cronjob fields. Please see values.yaml for commented examples.
+# -- Dictionary of jobs. Key is the job name and value repeats a deployment
+# podTemplate adding custom job fields.
 jobs: {}
-  # job-one:
-  #   backoffLimit: 1
-  #   ttlSecondsAfterFinished: 120
-  #   restartPolicy: Never
-  #   imagePullSecret:
-  #     - name: regcred
-  #   containers:
-  #     container1:
-  #       image:
-  #         repository: nginx
-  #       command: ["nginx", "-g", "daemon off;"]
-  #       config:
-  #         env: {}
-  #       config:
-  #         secretEnv: {}
-  #       extraEnvFrom:
+  #  ## -- Database migrations job example
+  #  db-migrations:
+  #    # @schema
+  #    # additionalProperties: true
+  #    # @schema
+  #    # -- Job annotations
+  #    annotations:
+  #      argocd.argoproj.io/sync-wave: "-1"
+  #    backoffLimit: 1
+  #    ttlSecondsAfterFinished: 500
+  #    restartPolicy: Never
+  #    # @schema
+  #    # additionalProperties: true
+  #    # @schema
+  #    containers:
+  #      # @schema
+  #      # additionalProperties: true
+  #      # @schema
+  #      migrate:
+  #        # @schema
+  #        # additionalProperties: true
+  #        # @schema
+  #        # -- Dictionary allows to define repository, tag and imagePullPolicy. If
+  #        # not defined main Value is used.
+  #        image: {}
+  #        args:
+  #          - php
+  #          - artisan
+  #          - migrate
+  #          - --force
+  #        # @schema
+  #        # additionalProperties: true
+  #        # @schema
+  #        extraEnvFrom: |
+  #          - configMapRef:
+  #              name: |-
+  #                {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" "app") }}
   #          - secretRef:
-  #            name: extra-secret
-  #       persistence:
-  #         data:
-  #           annotations:
-  #             example.com/annotation: "true"
-  #           storageClassName: "storageclass"
-  #           resources:
-  #             requests:
-  #               storage: 1Gi
-  #           mountPath: "/data"
-  #         existingData:
-  #           mountPath: "/existing-data"
-  #           existingClaim: "my-existing-pvc"
-  #       extraVolumeMounts:
-  #         - name: my-extra-volume
-  #           mountPath: /my/extra/path
-  #           readOnly: true
-  #   extraVolumes:
-  #     - name: my-extra-volume
-  #       emptyDir: {}
+  #              name: |-
+  #                {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" "app") }}
+  #            {{- if .Values.containers.app.extraEnvFrom }}
+  #            {{- .Values.containers.app.extraEnvFrom | nindent 0 }}
+  #            {{- end }}
 
 # -- Dictionary of extra Deplouments. Key is the deployment name and value repeats a deployment podTemplate adding custom cronjob fields. Please see values.yaml for commented examples.
 extraDeplyments: {}
+  #  # -- Queue worker deployment
+  #  queue:
+  #    # @schema
+  #    # additionalProperties: true
+  #    # @schema
+  #    containers:
+  #      # @schema
+  #      # additionalProperties: true
+  #      # @schema
+  #      queue:
+  #        # @schema
+  #        # additionalProperties: true
+  #        # @schema
+  #        # -- Dictionary allows to define repository, tag and imagePullPolicy. If
+  #        # not defined main Value is used.
+  #        image: {}
+  #        # @schema
+  #        # additionalProperties: true
+  #        # @schema
+  #        # -- Command to run queue procesing
+  #        command:
+  #          - php
+  #          - artisan
+  #          - queue:work
+  #          - --tries=3
+  #        # @schema
+  #        # additionalProperties: true
+  #        # @schema
+  #        extraEnvFrom: |
+  #          - configMapRef:
+  #              name: |-
+  #                {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" "app") }}
+  #          - secretRef:
+  #              name: |-
+  #                {{ include "<CHARTNAME>.containerObjectName" (dict "root" $ "container" "app") }}
+  #            {{- if .Values.containers.app.extraEnvFrom }}
+  #            {{- .Values.containers.app.extraEnvFrom | nindent 0 }}
+  #            {{- end }}
+  #
+  #        # @schema
+  #        # additionalProperties: true
+  #        # @schema
+  #        # -- Define a custom
+  #        # [livenessProbe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
+  #        livenessProbe:
+  #          exec:
+  #            command:
+  #              - /bin/sh
+  #              - -c
+  #              - pgrep -f "queue:work" || exit 1
+  #          initialDelaySeconds: 1
+  #          periodSeconds: 10
+  #
+  #        # @schema
+  #        # additionalProperties: true
+  #        # @schema
+  #        # -- Define a custom
+  #        # [readinessProbe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
+  #        readinessProbe:
+  #          exec:
+  #            command:
+  #            - /bin/sh
+  #            - -c
+  #            - pgrep -f "queue:work" || exit 1
+  #          initialDelaySeconds: 5
+  #          periodSeconds: 10
