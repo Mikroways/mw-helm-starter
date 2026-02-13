@@ -5,7 +5,7 @@ The main goal to this repository is to have a library of helm scaffoldings to us
 with the `helm create` command in order to:
 
 - Automatize chart creation with some of the
-  [helm best practices](https://helm.sh/docs/chart_best_practices/) and 
+  [helm best practices](https://helm.sh/docs/chart_best_practices/) and
   [helm tips and tricks](https://helm.sh/docs/howto/charts_tips_and_tricks/)
 - Act as a baseline to chart development flow.
 
@@ -24,7 +24,7 @@ helm starter fetch https://github.com/Mikroways/mw-helm-starter.git
 Then simply run:
 
 ```sh
-helm create testing-starter -p mw-helm-starter/single-image
+helm create testing-starter -p mw-helm-starter/single-container
 ```
 
 Also you can update your starter using:
@@ -42,7 +42,7 @@ Clone this repository where you want, and pass along the scaffold path to the
 # Clone the repo
 git clone  https://github.com/Mikroways/mw-helm-starter.git /tmp/mw-helm-starter
 # Create the chart for a single image case
-helm create testing-starter -p /tmp/mw-helm-starter/single-image
+helm create testing-starter -p /tmp/mw-helm-starter/single-container
 ```
 
 ## Provided starters
@@ -86,7 +86,7 @@ containers:
         cpu: 100m
         memory: 128Mi
 
-    env: 
+    env:
       NAME: John
       LAST_NAME: Doe
 
@@ -100,7 +100,7 @@ containers:
       - name: http
         containerPot: 8080
         protcolo: TCP
-    
+
     persistence:
       enabled: true
       accessModes:
@@ -124,11 +124,11 @@ cronjobs:
     schedule: "* * * * *"
     containers:
       container1:
-        image: 
+        image:
           repository: busybox
         command: ["echo", "Hello from job1 container1"]
       container2:
-        image: 
+        image:
           repository: alpine
           tag: latest
           pullPolicy: Always
@@ -153,11 +153,11 @@ jobs:
     restartPolicy: Always
     containers:
       container1:
-        image: 
+        image:
           repository: busybox
         command: ["echo", "Hello from job1 container1"]
       container2:
-        image: 
+        image:
           repository: alpine
           tag: latest
           pullPolicy: Always
@@ -177,10 +177,10 @@ jobs:
 extraDeployments:
   deployment-two:
     imagePullSecrets:
-      - name: mysecret   
+      - name: mysecret
     containers:
       container1:
-        image: 
+        image:
           repository: nginx
         command: ["nginx", "-g", "daemon off;"]
         persistence:
