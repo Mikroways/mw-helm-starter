@@ -41,8 +41,8 @@ env: {}
 # `kubectl explain pod.spec.containers[].ports`
 ports:
   - name: http
-    containerPot: 8080
-    protcolo: TCP
+    containerPort: 8080
+    protocol: TCP
 config:
   # --Key value pairs created using a ConfigMap and rendered as environment
   # variables inside container.Allows gotpl expressions, for example:

@@ -98,8 +98,8 @@ containers:
 
     ports:
       - name: http
-        containerPot: 8080
-        protcolo: TCP
+        containerPort: 8080
+        protocol: TCP
 
     persistence:
       enabled: true
