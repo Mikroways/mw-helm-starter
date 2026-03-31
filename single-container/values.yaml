@@ -75,6 +75,11 @@ securityContext: {}
 
 service:
   type: ClusterIP
+
+  # -- Which service port will be used when multiple containers and ports can be
+  # defined. Each element can use fields as explained by
+  servicePort: 8080
+
   # -- Array of service ports. Each element can use fields as explained by
   # `kubectl explain service.spec.ports`
   ports:
@@ -118,6 +123,31 @@ ingress:
   #    hosts:
   #      - chart-example.local
   #      - "{{ .Values.global.tls.domain }}"
+
+httpRoute:
+  # -- Enable HTTPRoute or not
+  enabled: false
+  # -- key value pairs for HTTPRoute annotations
+  annotations: {}
+  # -- Array of objects, specifying `name:` and optionally `group:`, `kind:`,
+  # `namespace:`, `sectionName:` and `port:`, which are all strings except
+  # for `port:` which is an integer
+  parentRefs: []
+      #    - name: "{{ .Values.gateway.name }}"
+      #    - sectionName: http
+  # Allows gotpl expressions. See example below
+  # -- Array of strings, specifying hostnames
+  hostnames: []
+      #    - "{{ .Values.global.ingress.host }}"
+      #    - chart-example.local
+  # -- Array of objects, specifying `matches:` and `filters:`. Each one is an
+  # array of objects.
+  rules: []
+      #    - filters:
+      #      - type: RequestRedirect
+      #        requestRedirect:
+      #          scheme: https
+      #          statusCode: 301
 
 # -- Define a custom [livenessProbe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
 livenessProbe: {}
