@@ -1,0 +1,43 @@
+{{- if .Values.httpRoute.enabled }}
+{{- $fullName := include "<CHARTNAME>.fullname" . -}}
+{{- $svcPort := .Values.service.servicePort -}}
+{{- if .Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1/HTTPRoute" }}
+apiVersion: gateway.networking.k8s.io/v1
+{{- else if .Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1beta1/HTTPRoute" }}
+apiVersion: gateway.networking.k8s.io/v1beta1
+{{- else }}
+{{- fail "No compatible HTTPRoute API version found" }}
+{{- end }}
+kind: HTTPRoute
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "<CHARTNAME>.labels" . | nindent 4 }}
+  {{- with .Values.httpRoute.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.httpRoute.parentRefs }}
+  parentRefs:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  hostnames:
+    {{- range .Values.httpRoute.hostnames }}
+    - {{ ( tpl . $) | quote }}
+    {{- end }}
+  rules:
+    {{- range .Values.httpRoute.rules }}
+    - backendRefs:
+        - name: {{ $fullName }}
+          port: {{ $svcPort }}
+      {{- with .matches }}
+      matches:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .filters }}
+      filters:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- end }}
+{{- end }}
