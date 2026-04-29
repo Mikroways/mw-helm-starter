@@ -148,6 +148,11 @@ httpRoute:
       #        requestRedirect:
       #          scheme: https
       #          statusCode: 301
+  # @schema
+  # additionalProperties: true
+  # @schema
+  # -- key value pairs for HTTPRoute labels
+  labels: {}
 
 # -- Define a custom [livenessProbe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
 livenessProbe: {}

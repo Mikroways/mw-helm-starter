@@ -353,6 +353,11 @@ httpRoute:
       #        requestRedirect:
       #          scheme: https
       #          statusCode: 301
+  # @schema
+  # additionalProperties: true
+  # @schema
+  # -- key value pairs for HTTPRoute labels
+  labels: {}
 
 autoscaling:
   # -- Manage if HPA will be used for autoscaling
